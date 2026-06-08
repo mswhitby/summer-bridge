@@ -84,7 +84,7 @@ const SCHEDULES = {
 
   tue: {
     label: 'Tuesday, June 9', shortLabel: 'Tue 6/9',
-    csvFile: 'students_tue.csv', pendingAssignment: true,
+    csvFile: 'students_tue.csv', pendingAssignment: false,
     getSchedule(color, number) {
       const nlcRoom = ROOMS_TUE.nlc[color][number - 1];
       const elarRoom = ROOMS_TUE.elar[color];
