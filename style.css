@@ -181,6 +181,9 @@ input[type="text"]:focus { border-color: var(--blue-border); }
   border: 0.5px solid var(--color-border);
 }
 
+.section { display: none; }
+.section.active { display: block; }
+
 /* ─── Teacher view ───────────────────────────────────────────────────────── */
 .teacher-badge {
   display: flex; align-items: center; gap: 14px;
@@ -245,4 +248,27 @@ input[type="text"]:focus { border-color: var(--blue-border); }
   font-size: 13px; line-height: 1.6;
   margin-bottom: 1rem;
   border: 1px solid var(--orange-border);
+}
+
+/* ─── Collapsible roster toggle ─────────────────────────────────────────── */
+.roster-toggle {
+  display: flex; align-items: center; gap: 6px;
+  flex-shrink: 0; margin-left: 12px; margin-top: 2px;
+}
+.roster-count {
+  font-size: 12px; color: var(--color-text-muted);
+}
+.toggle-arrow {
+  font-size: 12px; color: var(--color-text-hint);
+}
+.rot-roster {
+  border-top: 0.5px solid var(--color-border);
+}
+
+/* ─── Group pill on teacher rotation header ─────────────────────────────── */
+.group-pill {
+  display: inline-block;
+  font-size: 12px; font-weight: 600;
+  padding: 2px 10px; border-radius: 20px;
+  margin-top: 4px;
 }

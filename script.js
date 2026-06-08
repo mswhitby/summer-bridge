@@ -261,6 +261,7 @@ function selectStudent(name) {
 
   document.getElementById('student-search').value = '';
   document.getElementById('student-results').innerHTML = '';
+  document.getElementById('student-search-wrap').style.display = 'none';
   document.getElementById('student-sched-view').style.display = '';
   renderStudentView();
 }
@@ -317,6 +318,7 @@ function switchDay(dayKey) {
 function clearStudentSchedule() {
   activeStudent = null;
   document.getElementById('student-sched-view').style.display = 'none';
+  document.getElementById('student-search-wrap').style.display = '';
   document.getElementById('student-search').focus();
 }
 
@@ -533,6 +535,7 @@ function selectTeacher(name) {
   activeTeacherDay = 'mon';
   document.getElementById('teacher-search').value = '';
   document.getElementById('teacher-results').innerHTML = '';
+  document.getElementById('teacher-search-wrap').style.display = 'none';
   document.getElementById('teacher-sched-view').style.display = '';
   renderTeacherView();
 }
@@ -576,29 +579,101 @@ function renderTeacherView() {
     notice = `<div class="nlc-travel-card">🚌 You are traveling to NLC today. You move with your assigned student group — your location each rotation is listed below.</div>`;
   }
 
-  const blocksHtml = rotations.map(rot => {
-    const groupBadge = rot.students.length
-      ? rot.students.map(s => `
-          <div class="student-chip">
-            <div class="chip-name">${s.name}</div>
-          </div>`).join('')
+  const teacherHomeRoom = t?.room ? `${name}-${t.room}` : null;
+
+  // Full-group (non-rotation) blocks for this day
+  const fullGroupBlocks = {
+    mon: [
+      { time:'7:30 – 8:30',  activity:'Arrival & Breakfast', room:'JECA Commons' },
+      { time:'8:30 – 9:20',  activity:'Welcome Kickoff',      room:'JECA Commons' },
+      { time:'12:15 – 1:00', activity:'Lunch',                room:'JECA Commons' },
+      { time:'1:05 – 1:35',  activity:'Games',                room:'' },
+      { time:'2:50 – 3:20',  activity:'P-TECH 101',           room:'JECA Commons' },
+      { time:'3:20 – 3:30',  activity:'Dismissal',            room:'JECA Commons' },
+    ],
+    tue: [
+      { time:'7:30 – 8:30',   activity:'Arrival & Breakfast',  room:'JECA Commons' },
+      { time:'11:15 – 12:15', activity:'Exploration Rotation', room:'PLXY Bluebonnet' },
+      { time:'12:15 – 1:00',  activity:'Lunch',                room:'' },
+      { time:'1:00 – 1:10',   activity:'Games',                room:'' },
+      { time:'3:30 – 4:00',   activity:'Dismissal',            room:'JECA Commons' },
+    ],
+    wed: [
+      { time:'7:30 – 8:30',   activity:'Arrival & Breakfast', room:'JECA Commons' },
+      { time:'11:25 – 11:55', activity:'Lunch',               room:'JECA Commons' },
+      { time:'12:05 – 12:35', activity:'Games',               room:'' },
+      { time:'3:30 – 4:00',   activity:'Dismissal',           room:'JECA Commons' },
+    ],
+    thu: [
+      { time:'7:30 – 8:30',  activity:'Arrival & Breakfast',  room:'JECA Commons' },
+      { time:'12:15 – 1:00', activity:'Lunch',                room:'' },
+      { time:'1:10 – 1:45',  activity:'Games / Pep Rally Prep', room:'' },
+      { time:'2:30 – 3:30',  activity:'JISD/NLC Pep Rally',   room:'JECA Commons' },
+      { time:'3:30 – 4:00',  activity:'Dismissal',            room:'JECA Commons' },
+    ],
+  };
+
+  const fullGroupHtml = (fullGroupBlocks[dayKey] || []).map(b => `
+    <div class="sched-block">
+      <div class="sched-time">${b.time}</div>
+      <div class="sched-activity">${b.activity}</div>
+      ${b.room ? `<div class="sched-room">📍 ${b.room}</div>` : ''}
+    </div>`).join('');
+
+  const blocksHtml = rotations.map((rot, i) => {
+    const rotId = `rot-roster-${i}`;
+    const count = rot.students.length;
+
+    // Determine the group color+number for this rotation (all students share the same group)
+    const firstStudent = rot.students[0];
+    let groupPillHtml = '';
+    if (firstStudent) {
+      const c = COLOR[firstStudent.color] || COLOR.Blue;
+      groupPillHtml = `<span class="group-pill" style="background:${c.bg};color:${c.text};border:1.5px solid ${c.border}">${firstStudent.color} · ${firstStudent.number}</span>`;
+    }
+
+    const rosterRows = count
+      ? rot.students.map(s => `<div class="student-chip"><div class="chip-name">${s.name}</div></div>`).join('')
       : `<div class="no-students">No students this rotation</div>`;
 
-    const locationHtml = rot.location
+    const awayFromRoom = rot.location && rot.location !== teacherHomeRoom;
+    const locationHtml = awayFromRoom
       ? `<div class="rot-location${rot.traveling ? ' traveling' : ''}">📍 ${rot.location}</div>`
       : '';
 
+    const rosterLabel = count ? `${count} student${count !== 1 ? 's' : ''}` : 'No students';
+
     return `<div class="rot-block">
-      <div class="rot-header">
-        <div class="rot-time">${rot.time}</div>
-        <div class="rot-activity">${rot.activity}</div>
-        ${locationHtml}
+      <div class="rot-header" onclick="toggleRoster('${rotId}')" style="cursor:pointer">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="rot-time">${rot.time}</div>
+            <div class="rot-activity">${rot.activity}</div>
+            ${groupPillHtml}
+            ${locationHtml}
+          </div>
+          <div class="roster-toggle" id="${rotId}-toggle">
+            <span class="roster-count">${rosterLabel}</span>
+            <span class="toggle-arrow">▸</span>
+          </div>
+        </div>
       </div>
-      ${groupBadge}
+      <div class="rot-roster" id="${rotId}" style="display:none">${rosterRows}</div>
     </div>`;
   }).join('');
 
-  document.getElementById('teacher-blocks').innerHTML = notice + blocksHtml;
+  document.getElementById('teacher-blocks').innerHTML = notice
+    + blocksHtml
+    + `<div class="card" style="margin-top:1rem">${fullGroupHtml}</div>`;
+}
+
+function toggleRoster(id) {
+  const roster = document.getElementById(id);
+  const toggle = document.getElementById(id + '-toggle');
+  const arrow = toggle.querySelector('.toggle-arrow');
+  const isOpen = roster.style.display !== 'none';
+  roster.style.display = isOpen ? 'none' : 'block';
+  arrow.textContent = isOpen ? '▸' : '▾';
 }
 
 function switchTeacherDay(dayKey) {
@@ -609,6 +684,7 @@ function switchTeacherDay(dayKey) {
 function clearTeacherSchedule() {
   activeTeacher = null;
   document.getElementById('teacher-sched-view').style.display = 'none';
+  document.getElementById('teacher-search-wrap').style.display = '';
   document.getElementById('teacher-search').focus();
 }
 
