@@ -14,19 +14,39 @@
     <p>JISD · June 8–11, 2026</p>
   </div>
 
-  <!-- Search -->
-  <div class="search-wrap">
-    <input type="text" id="search-input" placeholder="Search your name…"
-           oninput="onSearch()" autocomplete="off" aria-label="Search your name">
-    <div id="search-results"></div>
+  <div class="tabs" role="tablist">
+    <button class="tab active" onclick="switchTab('student')">Student</button>
+    <button class="tab" onclick="switchTab('teacher')">Teacher</button>
   </div>
 
-  <!-- Schedule view (hidden until a student+day is selected) -->
-  <div id="sched-view" style="display:none">
-    <button class="back-btn" onclick="clearSchedule()">← Back to search</button>
-    <div id="sched-badge"></div>
-    <div id="sched-day-tabs"></div>
-    <div id="sched-blocks" class="card"></div>
+  <!-- STUDENT TAB -->
+  <div id="student" class="section active">
+    <div class="search-wrap">
+      <input type="text" id="student-search" placeholder="Search your name…"
+             oninput="onStudentSearch()" autocomplete="off" aria-label="Search student name">
+      <div id="student-results"></div>
+    </div>
+    <div id="student-sched-view" style="display:none">
+      <button class="back-btn" onclick="clearStudentSchedule()">← Back to search</button>
+      <div id="student-badge"></div>
+      <div id="student-day-tabs"></div>
+      <div id="student-blocks" class="card"></div>
+    </div>
+  </div>
+
+  <!-- TEACHER TAB -->
+  <div id="teacher" class="section">
+    <div class="search-wrap">
+      <input type="text" id="teacher-search" placeholder="Search your name…"
+             oninput="onTeacherSearch()" autocomplete="off" aria-label="Search teacher name">
+      <div id="teacher-results"></div>
+    </div>
+    <div id="teacher-sched-view" style="display:none">
+      <button class="back-btn" onclick="clearTeacherSchedule()">← Back to search</button>
+      <div id="teacher-badge"></div>
+      <div id="teacher-day-tabs"></div>
+      <div id="teacher-blocks"></div>
+    </div>
   </div>
 
 </div>

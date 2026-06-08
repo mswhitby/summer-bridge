@@ -162,3 +162,87 @@ input[type="text"]:focus { border-color: var(--blue-border); }
   background: var(--yellow-bg); color: var(--yellow-text);
   border: 1px solid var(--yellow-border);
 }
+
+/* ─── Top-level tabs (Student / Teacher) ─────────────────────────────────── */
+.tabs {
+  display: flex; gap: 4px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 4px; margin-bottom: 1.25rem;
+}
+.tab {
+  flex: 1; padding: 8px 4px; border: none; background: transparent;
+  font-size: 14px; font-weight: 400; color: var(--color-text-muted);
+  border-radius: 6px; cursor: pointer; font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.tab.active {
+  background: var(--color-bg); color: var(--color-text); font-weight: 500;
+  border: 0.5px solid var(--color-border);
+}
+
+/* ─── Teacher view ───────────────────────────────────────────────────────── */
+.teacher-badge {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; margin-bottom: 1rem;
+  border-radius: var(--radius-lg);
+  border: 0.5px solid var(--color-border);
+  background: var(--color-surface);
+}
+.teacher-avatar {
+  width: 48px; height: 48px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 600; flex-shrink: 0;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border-strong);
+  color: var(--color-text);
+}
+.teacher-name  { font-size: 16px; font-weight: 600; }
+.teacher-room  { font-size: 13px; color: var(--color-text-muted); margin-top: 2px; }
+
+/* Teacher rotation block */
+.rot-block {
+  margin-bottom: 1rem;
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.rot-header {
+  padding: 10px 14px;
+  background: var(--color-surface);
+  border-bottom: 0.5px solid var(--color-border);
+}
+.rot-time     { font-size: 11px; color: var(--color-text-hint); text-transform: uppercase; letter-spacing: .06em; }
+.rot-activity { font-size: 14px; font-weight: 500; margin-top: 2px; }
+.rot-location { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
+.rot-location.traveling { color: var(--orange-text); font-style: italic; }
+
+.student-chip {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px;
+  border-bottom: 0.5px solid var(--color-border);
+}
+.student-chip:last-child { border-bottom: none; }
+.chip-dot {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  border-width: 1.5px; border-style: solid;
+}
+.chip-name { font-size: 14px; font-weight: 500; }
+.chip-group { font-size: 12px; color: var(--color-text-muted); }
+
+.no-students {
+  padding: 12px 14px;
+  font-size: 13px; color: var(--color-text-muted); font-style: italic;
+}
+
+.nlc-travel-card {
+  padding: 14px;
+  background: var(--orange-bg);
+  color: var(--orange-text);
+  border-radius: var(--radius-md);
+  font-size: 13px; line-height: 1.6;
+  margin-bottom: 1rem;
+  border: 1px solid var(--orange-border);
+}
