@@ -1,10 +1,10 @@
-name,group,subgroup
-Maria Lopez,1,
-James Kim,4,
-Priya Patel,7,
-DeShawn Williams,2,
-Sofia Reyes,5,
-Marcus Johnson,8,
-Aaliyah Brown,3,
-Tyler Nguyen,6,
-Isabella Garcia,9,
+name,color,number
+Maria Lopez,Red,1
+James Kim,Red,2
+Priya Patel,Red,3
+DeShawn Williams,Green,4
+Sofia Reyes,Green,5
+Marcus Johnson,Green,6
+Aaliyah Brown,Blue,7
+Tyler Nguyen,Blue,8
+Isabella Garcia,Blue,9

@@ -7,48 +7,29 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
 <div class="app">
+
   <div class="hero">
     <h1>P-TECH Summer Bridge</h1>
     <p>JISD · June 8–11, 2026</p>
   </div>
 
-  <!-- Tab bar -->
-  <div class="tabs" role="tablist">
-    <button class="tab active" role="tab" onclick="switchTab('my-schedule')">My schedule</button>
-    <button class="tab" role="tab" onclick="switchTab('find-student')">Find a student</button>
-  </div>
-
-  <!-- MY SCHEDULE TAB -->
-  <div id="my-schedule" class="section active">
-    <div id="step-day">
-      <p class="label">Which day?</p>
-      <div class="day-select">
-        <button class="day-btn today-btn active" onclick="selectDay('mon')" id="btn-mon">
-          Mon, June 8<br><span class="today-badge">today</span>
-        </button>
-        <button class="day-btn" onclick="selectDay('tue')" id="btn-tue">Tue, June 9</button>
-        <button class="day-btn" onclick="selectDay('wed')" id="btn-wed">Wed, June 10</button>
-        <button class="day-btn" onclick="selectDay('thu')" id="btn-thu">Thu, June 11</button>
-      </div>
-      <div id="group-picker"></div>
-    </div>
-    <div id="step-sched" style="display:none"></div>
-  </div>
-
-  <!-- FIND A STUDENT TAB -->
-  <div id="find-student" class="section">
-    <div class="card">
-      <p class="label">Search by name</p>
-      <input type="text" id="search-input" placeholder="Type a student name…"
-             oninput="searchStudent()" aria-label="Search students">
-    </div>
+  <!-- Search -->
+  <div class="search-wrap">
+    <input type="text" id="search-input" placeholder="Search your name…"
+           oninput="onSearch()" autocomplete="off" aria-label="Search your name">
     <div id="search-results"></div>
   </div>
 
-</div>
+  <!-- Schedule view (hidden until a student+day is selected) -->
+  <div id="sched-view" style="display:none">
+    <button class="back-btn" onclick="clearSchedule()">← Back to search</button>
+    <div id="sched-badge"></div>
+    <div id="sched-day-tabs"></div>
+    <div id="sched-blocks" class="card"></div>
+  </div>
 
+</div>
 <script src="script.js"></script>
 </body>
 </html>
