@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P-TECH Summer Bridge Schedule</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+  <div class="hero">
+    <h1>P-TECH Summer Bridge</h1>
+    <p>JISD · June 8–11, 2026</p>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" role="tab" onclick="switchTab('my-schedule')">My schedule</button>
+    <button class="tab" role="tab" onclick="switchTab('find-student')">Find a student</button>
+    <button class="tab" role="tab" onclick="switchTab('roster')">Roster</button>
+  </div>
+
+  <!-- MY SCHEDULE TAB -->
+  <div id="my-schedule" class="section active">
+    <div id="step-day">
+      <p class="label">Which day?</p>
+      <div class="day-select">
+        <button class="day-btn today-btn active" onclick="selectDay('mon')" id="btn-mon">
+          Mon, June 8<br><span class="today-badge">today</span>
+        </button>
+        <button class="day-btn" onclick="selectDay('tue')" id="btn-tue">Tue, June 9</button>
+        <button class="day-btn" onclick="selectDay('wed')" id="btn-wed">Wed, June 10</button>
+        <button class="day-btn" onclick="selectDay('thu')" id="btn-thu">Thu, June 11</button>
+      </div>
+      <div id="group-picker"></div>
+    </div>
+    <div id="step-sched" style="display:none"></div>
+  </div>
+
+  <!-- FIND A STUDENT TAB -->
+  <div id="find-student" class="section">
+    <div class="card">
+      <p class="label">Search by name</p>
+      <input type="text" id="search-input" placeholder="Type a student name…" oninput="searchStudent()" aria-label="Search students">
+    </div>
+    <div id="search-results"></div>
+  </div>
+
+  <!-- ROSTER TAB -->
+  <div id="roster" class="section">
+    <div class="card">
+      <p class="label">Paste student roster</p>
+      <p class="hint">One student per line. Format: <code>Name, Group, Number</code><br>
+        Color days: <code>Maria Lopez, Orange, 3</code><br>
+        Number days: <code>James Kim, 7</code></p>
+      <textarea id="roster-input" placeholder="Maria Lopez, Orange, 3&#10;James Kim, Blue, 7&#10;Priya Patel, Green, 1" aria-label="Roster input"></textarea>
+      <div class="btn-row">
+        <button class="btn" onclick="parseRoster()">Load roster</button>
+        <button class="btn" onclick="clearRoster()">Clear</button>
+      </div>
+      <div id="roster-status"></div>
+    </div>
+    <div id="roster-preview"></div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
