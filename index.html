@@ -14,10 +14,10 @@
     <p>JISD · June 8–11, 2026</p>
   </div>
 
+  <!-- Tab bar -->
   <div class="tabs" role="tablist">
     <button class="tab active" role="tab" onclick="switchTab('my-schedule')">My schedule</button>
     <button class="tab" role="tab" onclick="switchTab('find-student')">Find a student</button>
-    <button class="tab" role="tab" onclick="switchTab('roster')">Roster</button>
   </div>
 
   <!-- MY SCHEDULE TAB -->
@@ -41,27 +41,12 @@
   <div id="find-student" class="section">
     <div class="card">
       <p class="label">Search by name</p>
-      <input type="text" id="search-input" placeholder="Type a student name…" oninput="searchStudent()" aria-label="Search students">
+      <input type="text" id="search-input" placeholder="Type a student name…"
+             oninput="searchStudent()" aria-label="Search students">
     </div>
     <div id="search-results"></div>
   </div>
 
-  <!-- ROSTER TAB -->
-  <div id="roster" class="section">
-    <div class="card">
-      <p class="label">Paste student roster</p>
-      <p class="hint">One student per line. Format: <code>Name, Group, Number</code><br>
-        Color days: <code>Maria Lopez, Orange, 3</code><br>
-        Number days: <code>James Kim, 7</code></p>
-      <textarea id="roster-input" placeholder="Maria Lopez, Orange, 3&#10;James Kim, Blue, 7&#10;Priya Patel, Green, 1" aria-label="Roster input"></textarea>
-      <div class="btn-row">
-        <button class="btn" onclick="parseRoster()">Load roster</button>
-        <button class="btn" onclick="clearRoster()">Clear</button>
-      </div>
-      <div id="roster-status"></div>
-    </div>
-    <div id="roster-preview"></div>
-  </div>
 </div>
 
 <script src="script.js"></script>
