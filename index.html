@@ -4,7 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>P-TECH Summer Bridge Schedule</title>
-  <link rel="stylesheet" href="style.css">
+  <script>
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'style.css?v=' + Date.now();
+  document.head.appendChild(link);
+</script>
 </head>
 <body>
 <div class="app">
