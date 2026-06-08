@@ -581,99 +581,104 @@ function renderTeacherView() {
 
   const teacherHomeRoom = t?.room ? `${name}-${t.room}` : null;
 
-  // Full-group (non-rotation) blocks for this day
+  // Full-group blocks (shared activities all teachers attend)
   const fullGroupBlocks = {
     mon: [
-      { time:'7:30 – 8:30',  activity:'Arrival & Breakfast', room:'JECA Commons' },
-      { time:'8:30 – 9:20',  activity:'Welcome Kickoff',      room:'JECA Commons' },
-      { time:'12:15 – 1:00', activity:'Lunch',                room:'JECA Commons' },
-      { time:'1:05 – 1:35',  activity:'Games',                room:'' },
-      { time:'2:50 – 3:20',  activity:'P-TECH 101',           room:'JECA Commons' },
-      { time:'3:20 – 3:30',  activity:'Dismissal',            room:'JECA Commons' },
+      { time:'7:30 – 8:30',  sortMin: 450,  activity:'Arrival & Breakfast', room:'JECA Commons' },
+      { time:'8:30 – 9:20',  sortMin: 510,  activity:'Welcome Kickoff',      room:'JECA Commons' },
+      { time:'12:15 – 1:00', sortMin: 735,  activity:'Lunch',                room:'JECA Commons' },
+      { time:'1:05 – 1:35',  sortMin: 785,  activity:'Games',                room:'' },
+      { time:'2:50 – 3:20',  sortMin: 890,  activity:'P-TECH 101',           room:'JECA Commons' },
+      { time:'3:20 – 3:30',  sortMin: 920,  activity:'Dismissal',            room:'JECA Commons' },
     ],
     tue: [
-      { time:'7:30 – 8:30',   activity:'Arrival & Breakfast',  room:'JECA Commons' },
-      { time:'11:15 – 12:15', activity:'Exploration Rotation', room:'PLXY Bluebonnet' },
-      { time:'12:15 – 1:00',  activity:'Lunch',                room:'' },
-      { time:'1:00 – 1:10',   activity:'Games',                room:'' },
-      { time:'3:30 – 4:00',   activity:'Dismissal',            room:'JECA Commons' },
+      { time:'7:30 – 8:30',   sortMin: 450, activity:'Arrival & Breakfast',   room:'JECA Commons' },
+      { time:'11:15 – 12:15', sortMin: 675, activity:'Exploration Rotation',  room:'PLXY Bluebonnet' },
+      { time:'12:15 – 1:00',  sortMin: 735, activity:'Lunch',                 room:'' },
+      { time:'1:00 – 1:10',   sortMin: 780, activity:'Games',                 room:'' },
+      { time:'3:30 – 4:00',   sortMin: 930, activity:'Dismissal',             room:'JECA Commons' },
     ],
     wed: [
-      { time:'7:30 – 8:30',   activity:'Arrival & Breakfast', room:'JECA Commons' },
-      { time:'11:25 – 11:55', activity:'Lunch',               room:'JECA Commons' },
-      { time:'12:05 – 12:35', activity:'Games',               room:'' },
-      { time:'3:30 – 4:00',   activity:'Dismissal',           room:'JECA Commons' },
+      { time:'7:30 – 8:30',   sortMin: 450, activity:'Arrival & Breakfast', room:'JECA Commons' },
+      { time:'11:25 – 11:55', sortMin: 685, activity:'Lunch',               room:'JECA Commons' },
+      { time:'12:05 – 12:35', sortMin: 725, activity:'Games',               room:'' },
+      { time:'3:30 – 4:00',   sortMin: 930, activity:'Dismissal',           room:'JECA Commons' },
     ],
     thu: [
-      { time:'7:30 – 8:30',  activity:'Arrival & Breakfast',  room:'JECA Commons' },
-      { time:'12:15 – 1:00', activity:'Lunch',                room:'' },
-      { time:'1:10 – 1:45',  activity:'Games / Pep Rally Prep', room:'' },
-      { time:'2:30 – 3:30',  activity:'JISD/NLC Pep Rally',   room:'JECA Commons' },
-      { time:'3:30 – 4:00',  activity:'Dismissal',            room:'JECA Commons' },
+      { time:'7:30 – 8:30',  sortMin: 450,  activity:'Arrival & Breakfast',    room:'JECA Commons' },
+      { time:'12:15 – 1:00', sortMin: 735,  activity:'Lunch',                  room:'' },
+      { time:'1:10 – 1:45',  sortMin: 790,  activity:'Games / Pep Rally Prep', room:'' },
+      { time:'2:30 – 3:30',  sortMin: 870,  activity:'JISD/NLC Pep Rally',     room:'JECA Commons' },
+      { time:'3:30 – 4:00',  sortMin: 930,  activity:'Dismissal',              room:'JECA Commons' },
     ],
   };
 
-  const fullGroupHtml = (fullGroupBlocks[dayKey] || []).map(b => `
-    <div class="sched-block">
-      <div class="sched-time">${b.time}</div>
-      <div class="sched-activity">${b.activity}</div>
-      ${b.room ? `<div class="sched-room">📍 ${b.room}</div>` : ''}
-    </div>`).join('');
+  // Parse "H:MM" start time to minutes for sorting
+  function toMin(timeStr) {
+    const [h, m] = timeStr.split('–')[0].trim().split(':').map(Number);
+    return h * 60 + m;
+  }
 
-  const blocksHtml = rotations.map((rot, i) => {
+  // Build merged timeline: rotation rows get group+roster, full-group rows are plain
+  const rotationRows = rotations.map((rot, i) => {
     const rotId = `rot-roster-${i}`;
     const count = rot.students.length;
-
-    // Determine the group color+number for this rotation (all students share the same group)
     const firstStudent = rot.students[0];
-    let groupPillHtml = '';
-    if (firstStudent) {
-      const c = COLOR[firstStudent.color] || COLOR.Blue;
-      groupPillHtml = `<span class="group-pill" style="background:${c.bg};color:${c.text};border:1.5px solid ${c.border}">${firstStudent.color} · ${firstStudent.number}</span>`;
-    }
 
+    const groupPillHtml = firstStudent
+      ? (() => { const c = COLOR[firstStudent.color] || COLOR.Blue;
+          return `<span class="group-pill" style="background:${c.bg};color:${c.text};border:1.5px solid ${c.border}">${firstStudent.color} · ${firstStudent.number}</span>`; })()
+      : '';
+
+    const awayFromRoom = rot.location && rot.location !== teacherHomeRoom;
+    const locationHtml = awayFromRoom
+      ? `<div class="sched-room${rot.traveling ? ' traveling' : ''}">📍 ${rot.location}</div>` : '';
+
+    const rosterLabel = count ? `${count} student${count !== 1 ? 's' : ''}` : 'No students';
     const rosterRows = count
       ? rot.students.map(s => `<div class="student-chip"><div class="chip-name">${s.name}</div></div>`).join('')
       : `<div class="no-students">No students this rotation</div>`;
 
-    const awayFromRoom = rot.location && rot.location !== teacherHomeRoom;
-    const locationHtml = awayFromRoom
-      ? `<div class="rot-location${rot.traveling ? ' traveling' : ''}">📍 ${rot.location}</div>`
-      : '';
-
-    const rosterLabel = count ? `${count} student${count !== 1 ? 's' : ''}` : 'No students';
-
-    return `<div class="rot-block">
-      <div class="rot-header" onclick="toggleRoster('${rotId}')" style="cursor:pointer">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div>
-            <div class="rot-time">${rot.time}</div>
-            <div class="rot-activity">${rot.activity}</div>
-            ${groupPillHtml}
-            ${locationHtml}
-          </div>
-          <div class="roster-toggle" id="${rotId}-toggle">
-            <span class="roster-count">${rosterLabel}</span>
-            <span class="toggle-arrow">▸</span>
-          </div>
+    return {
+      sortMin: toMin(rot.time),
+      html: `<div class="sched-block">
+        <div class="sched-time">${rot.time}</div>
+        <div class="sched-activity">${rot.activity}</div>
+        ${groupPillHtml}
+        ${locationHtml}
+        <div class="roster-toggle-row" onclick="toggleRoster('${rotId}')" style="cursor:pointer;margin-top:6px;display:flex;align-items:center;gap:6px">
+          <span class="roster-count">${rosterLabel}</span>
+          <span class="toggle-arrow" id="${rotId}-arrow">▸</span>
         </div>
-      </div>
-      <div class="rot-roster" id="${rotId}" style="display:none">${rosterRows}</div>
-    </div>`;
-  }).join('');
+        <div class="rot-roster" id="${rotId}" style="display:none;margin-top:4px">${rosterRows}</div>
+      </div>`
+    };
+  });
 
-  document.getElementById('teacher-blocks').innerHTML = notice
-    + blocksHtml
-    + `<div class="card" style="margin-top:1rem">${fullGroupHtml}</div>`;
+  const fullGroupRows = (fullGroupBlocks[dayKey] || []).map(b => ({
+    sortMin: b.sortMin,
+    html: `<div class="sched-block">
+      <div class="sched-time">${b.time}</div>
+      <div class="sched-activity">${b.activity}</div>
+      ${b.room ? `<div class="sched-room">📍 ${b.room}</div>` : ''}
+    </div>`
+  }));
+
+  const allRows = [...rotationRows, ...fullGroupRows]
+    .sort((a, b) => a.sortMin - b.sortMin)
+    .map(r => r.html)
+    .join('');
+
+  document.getElementById('teacher-blocks').innerHTML =
+    notice + `<div class="card">${allRows}</div>`;
 }
 
 function toggleRoster(id) {
   const roster = document.getElementById(id);
-  const toggle = document.getElementById(id + '-toggle');
-  const arrow = toggle.querySelector('.toggle-arrow');
+  const arrow = document.getElementById(id + '-arrow');
   const isOpen = roster.style.display !== 'none';
   roster.style.display = isOpen ? 'none' : 'block';
-  arrow.textContent = isOpen ? '▸' : '▾';
+  if (arrow) arrow.textContent = isOpen ? '▸' : '▾';
 }
 
 function switchTeacherDay(dayKey) {
