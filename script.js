@@ -32,12 +32,12 @@ const TUE_ROTATIONS = {
 // Teacher name included so teacher view can match; stripped for student display
 const TUE_ROOMS = {
   'TSI ELAR': {
-    1:'Kennedy-B209', 2:'Kennedy-B209', 3:'Miller-B207', 4:'Miller-B207',
-    5:'Kennedy-B209', 6:'Miller-B207',  7:'Miller-B207', 8:'Kennedy-B209',
+    1:'Miller-B207', 2:'Miller-B207', 3:'Garcia-B206', 4:'Garcia-B206',
+    5:'Miller-B207', 6:'Garcia-B206', 7:'Garcia-B206', 8:'Miller-B207',
   },
   'TSI Math': {
-    1:'Tinoco-B221', 2:'Tinoco-B221', 3:'Tinoco-B221', 4:'Garcia-B206',
-    5:'Tinoco-B221', 6:'Tinoco-B221', 7:'Garcia-B206', 8:'Tinoco-B221',
+    1:'Tinoco-B221', 2:'Tinoco-B221', 3:'Kennedy-B209', 4:'Kennedy-B209',
+    5:'Tinoco-B221', 6:'Kennedy-B209', 7:'Kennedy-B209', 8:'Tinoco-B221',
   },
   'NLC Advising (PLXY Bluebonnet)': {
     1:'Whitby-PLXY Bluebonnet',  2:'Harwell-PLXY Bluebonnet', 3:'Whitby-PLXY Bluebonnet',
@@ -51,13 +51,17 @@ const TUE_ROOMS = {
   },
 };
 
-// Format room string for student display: "Whitby-B208" → "Whitby - 208"
+// Format room string for display
+// ELAR/Math: "Miller-B207" → "Miller - 207"
+// NLC: "Whitby-PLXY 100" → "PLXY 100" (no teacher name)
 function formatRoom(roomStr) {
   if (!roomStr) return '';
   const i = roomStr.indexOf('-');
   if (i === -1) return roomStr;
   const teacher = roomStr.substring(0, i);
   const room = roomStr.substring(i + 1);
+  // NLC rooms start with PLXY — just show the room
+  if (room.startsWith('PLXY')) return room;
   const roomNum = room.startsWith('B') && !isNaN(room.substring(1)) ? room.substring(1) : room;
   return `${teacher} - ${roomNum}`;
 }
