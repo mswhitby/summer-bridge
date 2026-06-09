@@ -96,13 +96,32 @@ let activeTeacher = null;
 
 // ─── CSV loading ──────────────────────────────────────────────────────────────
 async function loadAllRosters() {
+  // Load master roster
+  let master = [];
+  try {
+    const res = await fetch('students_master.csv');
+    if (res.ok) master = parseCSV(await res.text());
+  } catch (_) {}
+
+  // Load Tuesday overrides — merge on top of master by name
+  // Day CSV only needs to list students whose group changes that day
+  let overrides = [];
   try {
     const res = await fetch('students_tue.csv');
-    if (res.ok) {
-      const text = await res.text();
-      rostersByDay['tue'] = parseCSV(text);
-    }
+    if (res.ok) overrides = parseCSV(await res.text());
   } catch (_) {}
+
+  if (overrides.length) {
+    const overrideMap = new Map(overrides.map(s => [s.name, s]));
+    // Replace matching students, keep everyone else from master
+    rostersByDay['tue'] = master.map(s => overrideMap.has(s.name) ? overrideMap.get(s.name) : s);
+    // Also add any override students not in master (shouldn't happen but safe)
+    for (const s of overrides) {
+      if (!master.find(m => m.name === s.name)) rostersByDay['tue'].push(s);
+    }
+  } else {
+    rostersByDay['tue'] = master;
+  }
 }
 
 function parseCSV(text) {
@@ -399,6 +418,14 @@ function renderTeacherView() {
 
   document.getElementById('teacher-blocks').innerHTML =
     notice + `<div class="card">${allRows}</div>`;
+}
+
+function toggleRoster(id) {
+  const roster = document.getElementById(id);
+  const arrow = document.getElementById(id + '-arrow');
+  const isOpen = roster.style.display !== 'none';
+  roster.style.display = isOpen ? 'none' : 'block';
+  if (arrow) arrow.textContent = isOpen ? '▸' : '▾';
 }
 
 function clearTeacherSchedule() {
