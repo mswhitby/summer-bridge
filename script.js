@@ -32,12 +32,12 @@ const TUE_ROTATIONS = {
 // Teacher name included so teacher view can match; stripped for student display
 const TUE_ROOMS = {
   'TSI ELAR': {
-    1:'Miller-B207', 2:'Miller-B207', 3:'Garcia-B206', 4:'Garcia-B206',
-    5:'Miller-B207', 6:'Garcia-B206', 7:'Garcia-B206', 8:'Miller-B207',
+    1:'Miller-B207', 2:'Miller-B207', 3:'Miller-B207', 4:'Miller-B207',
+    5:'Garcia-B206', 6:'Garcia-B206', 7:'Garcia-B206', 8:'Garcia-B206',
   },
   'TSI Math': {
-    1:'Tinoco-B221', 2:'Tinoco-B221', 3:'Kennedy-B209', 4:'Kennedy-B209',
-    5:'Tinoco-B221', 6:'Kennedy-B209', 7:'Kennedy-B209', 8:'Tinoco-B221',
+    1:'Kennedy-B209', 2:'Kennedy-B209', 3:'Kennedy-B209', 4:'Kennedy-B209',
+    5:'Tinoco-B221',  6:'Tinoco-B221',  7:'Tinoco-B221',  8:'Tinoco-B221',
   },
   'NLC Advising (PLXY Bluebonnet)': {
     1:'Whitby-PLXY Bluebonnet',  2:'Harwell-PLXY Bluebonnet', 3:'Harwell-PLXY Bluebonnet',
