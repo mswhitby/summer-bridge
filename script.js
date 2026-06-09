@@ -116,11 +116,11 @@ function parseCSV(text) {
   });
 }
 
-// ─── Student picker ───────────────────────────────────────────────────────────
+// ─── Student picker + search ──────────────────────────────────────────────────
 function initPicker() {
   const select = document.getElementById('group-select');
   select.innerHTML = '<option value="">Select your group number…</option>';
-  for (let n = 1; n <= 8; n++) {
+  for (let n = 1; n <= 8; n++) { // 9 excluded — teacher out, group dispersed
     const opt = document.createElement('option');
     opt.value = n;
     opt.textContent = n;
@@ -134,16 +134,52 @@ function onGroupSelect() {
   showStudentSchedule(Number(val));
 }
 
-function showStudentSchedule(number) {
+function onStudentSearch() {
+  const q = document.getElementById('student-search').value.trim().toLowerCase();
+  const out = document.getElementById('student-search-results');
+  if (!q) { out.innerHTML = ''; return; }
+
+  const students = rostersByDay['tue'] || [];
+  const matches = students.filter(s => s.name.toLowerCase().includes(q));
+
+  if (!matches.length) {
+    out.innerHTML = `<div class="empty-msg">No students found for "${q}"</div>`;
+    return;
+  }
+
+  // Dedupe by name
+  const seen = new Set();
+  let html = '';
+  for (const s of matches) {
+    if (seen.has(s.name)) continue;
+    seen.add(s.name);
+    html += `<div class="result-row" onclick="selectStudentByName('${s.name.replace(/'/g,"\\'")}')">
+      <div class="result-name">${s.name}</div>
+    </div>`;
+  }
+  out.innerHTML = html;
+}
+
+function selectStudentByName(name) {
+  const students = rostersByDay['tue'] || [];
+  const s = students.find(s => s.name === name);
+  if (!s) return;
+  document.getElementById('student-search').value = '';
+  document.getElementById('student-search-results').innerHTML = '';
+  showStudentSchedule(s.number, s.name);
+}
+
+function showStudentSchedule(number, studentName) {
   const color = GROUP_COLOR[number] || '';
   const c = COLOR[color] || { bg:'var(--color-surface)', text:'var(--color-text)', border:'var(--color-border-strong)' };
 
+  const nameDisplay = studentName || `Group ${number}`;
   document.getElementById('student-badge').innerHTML = `
     <div class="student-badge" style="margin-bottom:1rem">
       <div class="badge-circle" style="background:${c.bg};color:${c.text};border-color:${c.border}">${number}</div>
       <div>
-        <div class="badge-name">Group ${number}${color ? ' · ' + color : ''}</div>
-        <div class="badge-group">Tuesday, June 9</div>
+        <div class="badge-name">${nameDisplay}</div>
+        <div class="badge-group">Group ${number}${color ? ' · ' + color : ''} · Tuesday, June 9</div>
       </div>
     </div>`;
 
@@ -152,19 +188,39 @@ function showStudentSchedule(number) {
     const activity = TUE_ROTATIONS[number][i];
     const roomFull = TUE_ROOMS[activity]?.[number] || '';
     const room = formatRoom(roomFull);
-    return { time: rt.time, sortMin: rt.sortMin, activity, room };
+
+    // Roster for this rotation
+    const groupStudents = (rostersByDay['tue'] || []).filter(s => s.number === number);
+    const rosterId = `student-rot-${i}`;
+    const rosterHtml = groupStudents.length
+      ? groupStudents.map(s => `<div class="student-chip"><div class="chip-name">${s.name}</div></div>`).join('')
+      : '<div class="no-students">No roster loaded</div>';
+
+    return {
+      time: rt.time, sortMin: rt.sortMin, activity, room,
+      rosterId, rosterHtml, count: groupStudents.length
+    };
   });
 
-  const allBlocks = [...TUE_FULL_BLOCKS, ...rotBlocks]
-    .filter(b => !b.activity.startsWith('Transition'))
-    .sort((a, b) => a.sortMin - b.sortMin);
+  const allBlocks = [...TUE_FULL_BLOCKS.filter(b => !b.activity.startsWith('Transition')).map(b => ({
+    time: b.time, sortMin: b.sortMin, activity: b.activity, room: b.room,
+    rosterId: null
+  })), ...rotBlocks].sort((a, b) => a.sortMin - b.sortMin);
 
-  document.getElementById('student-blocks').innerHTML = allBlocks.map(b => `
-    <div class="sched-block">
+  document.getElementById('student-blocks').innerHTML = allBlocks.map(b => {
+    const rosterToggle = b.rosterId ? `
+      <div class="roster-toggle-row" onclick="toggleRoster('${b.rosterId}')" style="cursor:pointer;margin-top:6px;display:flex;align-items:center;gap:6px">
+        <span class="roster-count">${b.count} student${b.count !== 1 ? 's' : ''}</span>
+        <span class="toggle-arrow" id="${b.rosterId}-arrow">▸</span>
+      </div>
+      <div class="rot-roster" id="${b.rosterId}" style="display:none;margin-top:4px">${b.rosterHtml}</div>` : '';
+    return `<div class="sched-block">
       <div class="sched-time">${b.time}</div>
       <div class="sched-activity">${b.activity}</div>
       ${b.room ? `<div class="sched-room">📍 ${b.room}</div>` : ''}
-    </div>`).join('');
+      ${rosterToggle}
+    </div>`;
+  }).join('');
 
   document.getElementById('student-picker').style.display = 'none';
   document.getElementById('student-sched-view').style.display = '';

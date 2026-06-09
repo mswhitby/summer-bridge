@@ -27,10 +27,16 @@
   <!-- STUDENT TAB -->
   <div id="student" class="section active">
     <div id="student-picker">
-      <p class="label">What number is on your band?</p>
+      <p class="label">What is your group number?</p>
       <select id="group-select" onchange="onGroupSelect()" aria-label="Select group number">
         <option value="">Select your group number…</option>
       </select>
+      <p class="label" style="margin-top:1.25rem">Or search your name</p>
+      <div class="search-wrap">
+        <input type="text" id="student-search" placeholder="Search your name…"
+               oninput="onStudentSearch()" autocomplete="off" aria-label="Search student name">
+        <div id="student-search-results"></div>
+      </div>
     </div>
     <div id="student-sched-view" style="display:none">
       <button class="back-btn" onclick="clearStudentSchedule()">← Back</button>
