@@ -356,22 +356,37 @@ function initPicker() {
 }
 
 function switchStudentDay(dayKey) {
-  document.querySelectorAll('#student-day-tabs .day-tab').forEach(btn => btn.classList.remove('active'));
-  document.querySelector(`#student-day-tabs .day-tab[onclick*="'${dayKey}'"]`)?.classList.add('active');
-  updateGroupPicker(dayKey);
-  document.getElementById('student-search').value = '';
-  document.getElementById('student-search-results').innerHTML = '';
-  // Friday has no group to pick — go straight to schedule
-  if (DAYS[dayKey].type === 'noRotations') {
-    showStudentSchedule(dayKey, null);
+  const schedView = document.getElementById('student-sched-view');
+  const inScheduleView = schedView.style.display !== 'none';
+
+  if (inScheduleView) {
+    // Re-render schedule for same student on new day
+    const savedNumber = sessionStorage.getItem('sb_student_number');
+    const savedName   = sessionStorage.getItem('sb_student_name');
+    if (savedNumber) {
+      showStudentSchedule(dayKey, Number(savedNumber), savedName || undefined);
+    } else {
+      // Friday or no number — just show Friday schedule
+      showStudentSchedule(dayKey, null);
+    }
+  } else {
+    // In picker — update picker for new day
+    updateGroupPicker(dayKey);
+    document.getElementById('student-search').value = '';
+    document.getElementById('student-search-results').innerHTML = '';
+    if (DAYS[dayKey].type === 'noRotations') {
+      showStudentSchedule(dayKey, null);
+    }
   }
 }
 
 function getSelectedStudentDay() {
   const active = document.querySelector('#student-day-tabs .day-tab.active');
-  if (!active) return ACTIVE_DAY;
-  const match = active.getAttribute('onclick').match(/'(\w+)'/);
-  return match ? match[1] : ACTIVE_DAY;
+  if (active) {
+    const match = active.getAttribute('onclick').match(/'(\w+)'/);
+    if (match) return match[1];
+  }
+  return sessionStorage.getItem('sb_student_day') || ACTIVE_DAY;
 }
 
 function updateGroupPicker(dayKey) {
@@ -493,6 +508,15 @@ function showStudentSchedule(dayKey, number, studentName) {
     </div>`;
   }).join('');
 
+  // Render day tabs in schedule view
+  const tabsEl = document.getElementById('student-day-tabs');
+  if (tabsEl) {
+    tabsEl.innerHTML = Object.entries(DAYS).map(([key, day]) =>
+      `<button class="day-tab${key === dayKey ? ' active' : ''}"
+        onclick="switchStudentDay('${key}')">${day.short}</button>`
+    ).join('');
+  }
+
   sessionStorage.setItem('sb_student_number', number);
   sessionStorage.setItem('sb_student_name', studentName || '');
   sessionStorage.setItem('sb_student_day', dayKey);
@@ -508,8 +532,7 @@ function clearStudentSchedule() {
   sessionStorage.removeItem('sb_student_day');
   document.getElementById('student-sched-view').style.display = 'none';
   document.getElementById('student-picker').style.display = '';
-  const dayKey = getSelectedStudentDay();
-  updateGroupPicker(dayKey);
+  updateGroupPicker(ACTIVE_DAY);
 }
 
 // ─── Teacher registry ─────────────────────────────────────────────────────────
