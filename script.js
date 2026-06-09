@@ -10,7 +10,7 @@ const COLOR = {
 const GROUP_COLOR = {
   1:'Orange', 2:'Orange', 3:'Orange',
   4:'Yellow', 5:'Yellow', 6:'Yellow',
-  7:'Green',  8:'Green',
+  7:'Green',  8:'Green',  9:'Green',
 };
 
 // ─── NLC travelers ────────────────────────────────────────────────────────────
@@ -357,10 +357,14 @@ function initPicker() {
 
 function switchStudentDay(dayKey) {
   document.querySelectorAll('#student-day-tabs .day-tab').forEach(btn => btn.classList.remove('active'));
-  document.querySelector(`#student-day-tabs .day-tab[onclick*="${dayKey}"]`)?.classList.add('active');
+  document.querySelector(`#student-day-tabs .day-tab[onclick*="'${dayKey}'"]`)?.classList.add('active');
   updateGroupPicker(dayKey);
   document.getElementById('student-search').value = '';
   document.getElementById('student-search-results').innerHTML = '';
+  // Friday has no group to pick — go straight to schedule
+  if (DAYS[dayKey].type === 'noRotations') {
+    showStudentSchedule(dayKey, null);
+  }
 }
 
 function getSelectedStudentDay() {
@@ -372,29 +376,27 @@ function getSelectedStudentDay() {
 
 function updateGroupPicker(dayKey) {
   const day = DAYS[dayKey];
-  const pickerLabel = document.querySelector('#student-picker .label');
+  const groupLabel = document.getElementById('group-picker-label');
   const groupSelect = document.getElementById('group-select');
 
   if (day.type === 'noRotations') {
-    // Friday — no group picker, just show name search
-    if (pickerLabel) pickerLabel.style.display = 'none';
+    if (groupLabel) groupLabel.style.display = 'none';
     groupSelect.style.display = 'none';
-    // Auto-show schedule for Friday since there's no group to pick
-    showStudentSchedule('fri', null);
+    groupSelect.onchange = null;
     return;
   }
-  if (pickerLabel) pickerLabel.style.display = '';
+  if (groupLabel) groupLabel.style.display = '';
   groupSelect.style.display = '';
-  const select = document.getElementById('group-select');
-  select.innerHTML = '<option value="">Select your group number…</option>';
+  groupSelect.value = '';
+  groupSelect.innerHTML = '<option value="">Select your group number…</option>';
   for (let n = 1; n <= day.numGroups; n++) {
     const opt = document.createElement('option');
     opt.value = n;
     opt.textContent = n;
-    select.appendChild(opt);
+    groupSelect.appendChild(opt);
   }
-  select.onchange = () => {
-    const val = select.value;
+  groupSelect.onchange = () => {
+    const val = groupSelect.value;
     if (val) showStudentSchedule(dayKey, Number(val));
   };
 }
@@ -506,7 +508,8 @@ function clearStudentSchedule() {
   sessionStorage.removeItem('sb_student_day');
   document.getElementById('student-sched-view').style.display = 'none';
   document.getElementById('student-picker').style.display = '';
-  document.getElementById('group-select').value = '';
+  const dayKey = getSelectedStudentDay();
+  updateGroupPicker(dayKey);
 }
 
 // ─── Teacher registry ─────────────────────────────────────────────────────────
@@ -626,7 +629,7 @@ function renderTeacherView() {
     ).join('');
   document.getElementById('teacher-day-tabs').innerHTML = `<div class="day-tabs">${tabsHtml}</div>`;
 
-  const notice = isNLCTraveler
+  const notice = isNLCTraveler && (dayKey === 'tue' || dayKey === 'wed')
     ? `<div class="nlc-travel-card">🚌 You are traveling to NLC today. Your location each rotation is listed below.</div>`
     : '';
 
@@ -672,18 +675,35 @@ function renderTeacherView() {
   if (dayKey === 'wed') {
     fullBlocks = isNLCTraveler ? WED_TEACHER_BLOCKS_NLC : WED_TEACHER_BLOCKS_ONCAMPUS;
   } else if (dayKey === 'mon') {
-    fullBlocks = [
+    fullBlocks = isNLCTraveler ? [
       { time:'7:30 – 8:30',   sortMin:450, activity:'Arrival & Breakfast', room:'JECA Commons' },
       { time:'8:30 – 9:20',   sortMin:510, activity:'Welcome Kickoff',      room:'JECA Commons' },
-      { time:'12:05 – 1:00',  sortMin:725, activity:'Lunch',                room:'' },
+      { time:'12:15 – 12:30', sortMin:735, activity:'Lunch Duty',           room:'JECA Commons' },
+      { time:'12:30 – 1:00',  sortMin:750, activity:'Lunch',                room:'' },
+      { time:'1:05 – 1:35',   sortMin:785, activity:'Games',                room:'' },
+      { time:'2:50 – 3:20',   sortMin:890, activity:'P-TECH 101',           room:'JECA Commons' },
+      { time:'3:20 – 3:30',   sortMin:920, activity:'Dismissal',            room:'JECA Commons' },
+    ] : [
+      { time:'7:30 – 8:30',   sortMin:450, activity:'Arrival & Breakfast', room:'JECA Commons' },
+      { time:'8:30 – 9:20',   sortMin:510, activity:'Welcome Kickoff',      room:'JECA Commons' },
+      { time:'12:15 – 12:45', sortMin:735, activity:'Lunch',                room:'' },
+      { time:'12:45 – 1:00',  sortMin:765, activity:'Lunch Duty',           room:'JECA Commons' },
       { time:'1:05 – 1:35',   sortMin:785, activity:'Games',                room:'' },
       { time:'2:50 – 3:20',   sortMin:890, activity:'P-TECH 101',           room:'JECA Commons' },
       { time:'3:20 – 3:30',   sortMin:920, activity:'Dismissal',            room:'JECA Commons' },
     ];
   } else if (dayKey === 'thu') {
-    fullBlocks = [
-      { time:'7:30 – 8:30',   sortMin:450, activity:'Arrival & Breakfast',  room:'JECA Commons' },
-      { time:'12:05 – 1:00',  sortMin:725, activity:'Lunch',                 room:'' },
+    fullBlocks = isNLCTraveler ? [
+      { time:'7:30 – 8:30',   sortMin:450, activity:'Arrival & Breakfast',   room:'JECA Commons' },
+      { time:'12:15 – 12:30', sortMin:735, activity:'Lunch Duty',            room:'JECA Commons' },
+      { time:'12:30 – 1:00',  sortMin:750, activity:'Lunch',                 room:'' },
+      { time:'1:10 – 1:45',   sortMin:790, activity:'Games / Pep Rally Prep',room:'' },
+      { time:'2:30 – 3:30',   sortMin:870, activity:'JISD/NLC Pep Rally',    room:'JECA Commons' },
+      { time:'3:30 – 4:00',   sortMin:930, activity:'Dismissal',             room:'JECA Commons' },
+    ] : [
+      { time:'7:30 – 8:30',   sortMin:450, activity:'Arrival & Breakfast',   room:'JECA Commons' },
+      { time:'12:15 – 12:45', sortMin:735, activity:'Lunch',                 room:'' },
+      { time:'12:45 – 1:00',  sortMin:765, activity:'Lunch Duty',            room:'JECA Commons' },
       { time:'1:10 – 1:45',   sortMin:790, activity:'Games / Pep Rally Prep',room:'' },
       { time:'2:30 – 3:30',   sortMin:870, activity:'JISD/NLC Pep Rally',    room:'JECA Commons' },
       { time:'3:30 – 4:00',   sortMin:930, activity:'Dismissal',             room:'JECA Commons' },
