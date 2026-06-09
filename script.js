@@ -40,14 +40,14 @@ const TUE_ROOMS = {
     5:'Tinoco-B221', 6:'Kennedy-B209', 7:'Kennedy-B209', 8:'Tinoco-B221',
   },
   'NLC Advising (PLXY Bluebonnet)': {
-    1:'Whitby-PLXY Bluebonnet',  2:'Harwell-PLXY Bluebonnet', 3:'Whitby-PLXY Bluebonnet',
-    4:'Mercado-PLXY Bluebonnet', 5:'Mercado-PLXY Bluebonnet', 6:'Gilmore-PLXY Bluebonnet',
-    7:'Harwell-PLXY Bluebonnet', 8:'Gilmore-PLXY Bluebonnet',
+    1:'Whitby-PLXY Bluebonnet',  2:'Harwell-PLXY Bluebonnet', 3:'Harwell-PLXY Bluebonnet',
+    4:'Whitby-PLXY Bluebonnet',  5:'Mercado-PLXY Bluebonnet', 6:'Mercado-PLXY Bluebonnet',
+    7:'Gilmore-PLXY Bluebonnet', 8:'Gilmore-PLXY Bluebonnet',
   },
   'NLC HSP Orientation (PLXY 100)': {
-    1:'Whitby-PLXY 100',  2:'Harwell-PLXY 100', 3:'Whitby-PLXY 100',
-    4:'Mercado-PLXY 100', 5:'Mercado-PLXY 100', 6:'Gilmore-PLXY 100',
-    7:'Harwell-PLXY 100', 8:'Gilmore-PLXY 100',
+    1:'Whitby-PLXY 100',  2:'Harwell-PLXY 100', 3:'Harwell-PLXY 100',
+    4:'Whitby-PLXY 100',  5:'Mercado-PLXY 100', 6:'Mercado-PLXY 100',
+    7:'Gilmore-PLXY 100', 8:'Gilmore-PLXY 100',
   },
 };
 
@@ -177,22 +177,16 @@ function clearStudentSchedule() {
 }
 
 // ─── Teacher registry ─────────────────────────────────────────────────────────
-const ALL_TEACHERS = (() => {
-  const seen = new Set();
-  const all = [];
-  const roomStrings = [
-    'Kennedy-B209','Miller-B207','Tinoco-B221','Garcia-B206',
-    'Harwell-PLXY Bluebonnet','Mercado-PLXY Bluebonnet',
-    'Gilmore-PLXY 100','Whitby-PLXY 100',
-  ];
-  for (const rs of roomStrings) {
-    const i = rs.indexOf('-');
-    const name = rs.substring(0, i);
-    const room = rs.substring(i + 1);
-    if (!seen.has(name)) { seen.add(name); all.push({ name, room }); }
-  }
-  return all.sort((a, b) => a.name.localeCompare(b.name));
-})();
+const ALL_TEACHERS = [
+  { name:'Garcia',   room:'B206' },
+  { name:'Gilmore',  room:'B202' },
+  { name:'Harwell',  room:'B227' },
+  { name:'Kennedy',  room:'B209' },
+  { name:'Mercado',  room:'B229' },
+  { name:'Miller',   room:'B207' },
+  { name:'Tinoco',   room:'B221' },
+  { name:'Whitby',   room:'B208' },
+].sort((a, b) => a.name.localeCompare(b.name));
 
 // ─── Teacher schedule builder ─────────────────────────────────────────────────
 function getTeacherScheduleTue(teacherName) {
@@ -296,9 +290,8 @@ function renderTeacherView() {
       return `<span class="group-pill" style="background:${c.bg};color:${c.text};border:1px solid ${c.border};margin-right:4px">Group ${n}</span>`;
     }).join('');
 
-    const awayFromRoom = rot.location && rot.location !== teacherHomeRoom;
     const locationHtml = rot.location
-      ? `<div class="sched-room${(awayFromRoom && rot.traveling) ? ' traveling' : ''}">📍 ${rot.location}</div>`
+      ? `<div class="sched-room">📍 ${rot.location}</div>`
       : '';
 
     return {
