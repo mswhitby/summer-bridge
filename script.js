@@ -7,6 +7,14 @@ const COLOR = {
   Yellow: { bg:'var(--yellow-bg)',text:'var(--yellow-text)',border:'var(--yellow-border)' },
 };
 
+// ─── Group → band color (hardcoded) ──────────────────────────────────────────
+// Orange: 1-3, Yellow: 4-6, Green: 7-8
+const GROUP_COLOR = {
+  1:'Orange', 2:'Orange', 3:'Orange',
+  4:'Yellow', 5:'Yellow', 6:'Yellow',
+  7:'Green',  8:'Green',
+};
+
 // ─── Tuesday rotation schedule ────────────────────────────────────────────────
 // Group number (1-8) determines column; column determines all 4 rotations
 const TUE_ROTATIONS = {
@@ -32,14 +40,14 @@ const TUE_ROOMS = {
     5:'Tinoco-B221', 6:'Tinoco-B221', 7:'Garcia-B206', 8:'Tinoco-B221',
   },
   'NLC Advising (PLXY Bluebonnet)': {
-    1:'Mercado-PLXY Bluebonnet', 2:'Harwell-PLXY Bluebonnet', 3:'Mercado-PLXY Bluebonnet',
-    4:'Mercado-PLXY Bluebonnet', 5:'Harwell-PLXY Bluebonnet', 6:'Mercado-PLXY Bluebonnet',
-    7:'Mercado-PLXY Bluebonnet', 8:'Harwell-PLXY Bluebonnet',
+    1:'Whitby-PLXY Bluebonnet',  2:'Harwell-PLXY Bluebonnet', 3:'Whitby-PLXY Bluebonnet',
+    4:'Mercado-PLXY Bluebonnet', 5:'Mercado-PLXY Bluebonnet', 6:'Gilmore-PLXY Bluebonnet',
+    7:'Harwell-PLXY Bluebonnet', 8:'Gilmore-PLXY Bluebonnet',
   },
   'NLC HSP Orientation (PLXY 100)': {
-    1:'Gilmore-PLXY 100', 2:'Whitby-PLXY 100', 3:'Gilmore-PLXY 100',
-    4:'Gilmore-PLXY 100', 5:'Whitby-PLXY 100', 6:'Gilmore-PLXY 100',
-    7:'Gilmore-PLXY 100', 8:'Whitby-PLXY 100',
+    1:'Whitby-PLXY 100',  2:'Harwell-PLXY 100', 3:'Whitby-PLXY 100',
+    4:'Mercado-PLXY 100', 5:'Mercado-PLXY 100', 6:'Gilmore-PLXY 100',
+    7:'Harwell-PLXY 100', 8:'Gilmore-PLXY 100',
   },
 };
 
@@ -74,10 +82,6 @@ const TUE_ROT_TIMES = [
   { time:'2:20 – 3:25',  sortMin:860 },
 ];
 
-// ─── Band color lookup — loaded from CSV after roster loads ──────────────────
-// Maps group number → color name (from students_tue.csv)
-let groupColorMap = {};
-
 // ─── State ────────────────────────────────────────────────────────────────────
 let rostersByDay = {};
 let activeTeacher = null;
@@ -88,12 +92,7 @@ async function loadAllRosters() {
     const res = await fetch('students_tue.csv');
     if (res.ok) {
       const text = await res.text();
-      const students = parseCSV(text);
-      rostersByDay['tue'] = students;
-      // Build group→color map from CSV
-      for (const s of students) {
-        if (s.color && s.number) groupColorMap[s.number] = s.color;
-      }
+      rostersByDay['tue'] = parseCSV(text);
     }
   } catch (_) {}
 }
@@ -114,10 +113,9 @@ function initPicker() {
   const select = document.getElementById('group-select');
   select.innerHTML = '<option value="">Select your group number…</option>';
   for (let n = 1; n <= 8; n++) {
-    const color = groupColorMap[n] || '';
     const opt = document.createElement('option');
     opt.value = n;
-    opt.textContent = color ? `${n} — ${color}` : `${n}`;
+    opt.textContent = n;
     select.appendChild(opt);
   }
 }
@@ -129,7 +127,7 @@ function onGroupSelect() {
 }
 
 function showStudentSchedule(number) {
-  const color = groupColorMap[number] || '';
+  const color = GROUP_COLOR[number] || '';
   const c = COLOR[color] || { bg:'var(--color-surface)', text:'var(--color-text)', border:'var(--color-border-strong)' };
 
   document.getElementById('student-badge').innerHTML = `
@@ -285,7 +283,7 @@ function renderTeacherView() {
 
     // Group pills for each group coming to this teacher
     const groupPills = rot.groups.map(n => {
-      const color = groupColorMap[n] || '';
+      const color = GROUP_COLOR[n] || '';
       const c = COLOR[color] || { bg:'var(--color-surface)', text:'var(--color-text)', border:'var(--color-border-strong)' };
       return `<span class="group-pill" style="background:${c.bg};color:${c.text};border:1px solid ${c.border};margin-right:4px">Group ${n}</span>`;
     }).join('');
