@@ -24,8 +24,7 @@ function formatRoom(roomStr) {
   const teacher = roomStr.substring(0, i);
   const room = roomStr.substring(i + 1);
   if (room.startsWith('PLXY')) return room;
-  const roomNum = room.startsWith('B') && !isNaN(room.substring(1)) ? room.substring(1) : room;
-  return `${teacher} - ${roomNum}`;
+  return `${teacher} - ${room}`;
 }
 
 // ─── TUESDAY data ─────────────────────────────────────────────────────────────
@@ -140,7 +139,8 @@ const WED_STUDENT_BLOCKS = [
 // Teacher blocks differ by NLC vs on-campus for lunch/exploration
 const WED_TEACHER_BLOCKS_ONCAMPUS = [
   { time:'7:30 – 8:30',   sortMin:450, activity:'Arrival & Breakfast',   room:'JECA Commons' },
-  { time:'11:15 – 12:15', sortMin:675, activity:'Exploration Rotation',  room:'PLXY Bluebonnet' },
+  { time:'11:15 – 11:45', sortMin:675, activity:'Exploration Rotation',  room:'PLXY Bluebonnet' },
+  { time:'11:45 – 12:15', sortMin:705, activity:'Exploration Rotation',  room:'PLXY Bluebonnet' },
   { time:'12:15 – 12:45', sortMin:735, activity:'Lunch',                 room:'' },
   { time:'12:45 – 1:00',  sortMin:765, activity:'Lunch Duty',            room:'PLXY Bluebonnet' },
   { time:'3:30 – 4:00',   sortMin:930, activity:'Dismissal',             room:'JECA Commons' },
@@ -150,29 +150,142 @@ const WED_TEACHER_BLOCKS_NLC = [
   { time:'7:30 – 8:30',   sortMin:450, activity:'Arrival & Breakfast',   room:'JECA Commons' },
   { time:'11:15 – 11:45', sortMin:675, activity:'Exploration Rotation',  room:'PLXY Bluebonnet' },
   { time:'11:45 – 12:15', sortMin:705, activity:'Lunch',                 room:'' },
-  { time:'12:15 – 1:00', sortMin:735, activity:'Lunch Duty',            room:'PLXY Bluebonnet' },
+  { time:'12:15 – 12:45', sortMin:735, activity:'Lunch Duty',            room:'PLXY Bluebonnet' },
+  { time:'12:45 – 1:00',  sortMin:765, activity:'Lunch Duty',            room:'PLXY Bluebonnet' },
   { time:'3:30 – 4:00',   sortMin:930, activity:'Dismissal',             room:'JECA Commons' },
+];
+
+// ─── MONDAY / THURSDAY shared data ───────────────────────────────────────────
+// Groups 1-9: color determines room tier, number determines rotation slot
+// Red=1-3, Green=4-6, Blue=7-9
+const MON_THU_ROOMS = {
+  elar: { 1:'Miller-B207',  2:'Miller-B207',  3:'Miller-B207',
+          4:'Garcia-B206',  5:'Garcia-B206',  6:'Garcia-B206',
+          7:'Gilmore-B202', 8:'Gilmore-B202', 9:'Gilmore-B202' },
+  stem: { 1:'Brown-B226',   2:'Brown-B226',   3:'Brown-B226',
+          4:'Mercado-B229', 5:'Mercado-B229', 6:'Mercado-B229',
+          7:'Harwell-B227', 8:'Harwell-B227', 9:'Harwell-B227' },
+  math: { 1:'Kennedy-B209', 2:'Kennedy-B209', 3:'Kennedy-B209',
+          4:'Tinoco-B221',  5:'Tinoco-B221',  6:'Tinoco-B221',
+          7:'Whitby-B208',  8:'Whitby-B208',  9:'Whitby-B208'  },
+};
+
+const MON_THU_ROTS = {
+  rot1: { elar:[1,4,7], stem:[2,5,8], math:[3,6,9] },
+  rot2: { elar:[3,6,9], stem:[1,4,7], math:[2,5,8] },
+  rot3: { elar:[2,5,8], stem:[3,6,9], math:[1,4,7] },
+};
+
+function monThuActivity(number, slot) {
+  for (const [subj, nums] of Object.entries(MON_THU_ROTS[slot])) {
+    if (nums.includes(number)) return subj;
+  }
+}
+
+function monThuBlock(number, slot, labelMap) {
+  const subj = monThuActivity(number, slot);
+  return { activity: labelMap[subj], room: MON_THU_ROOMS[subj][number] };
+}
+
+// Monday rotation schedule — returns array of 4 blocks for a given group number
+function getMondayRotations(number) {
+  const labels = { elar:'TSIA ELAR', stem:'STEM Challenge', math:'TSIA Math' };
+  const r1 = monThuBlock(number, 'rot1', labels);
+  const r2 = monThuBlock(number, 'rot2', labels);
+  const r3 = monThuBlock(number, 'rot3', labels);
+  return [
+    { time:'9:30 – 10:45',  sortMin:570, activity:'Rotation 1: ' + r1.activity, room:r1.room },
+    { time:'10:50 – 12:05', sortMin:650, activity:'Rotation 2: ' + r2.activity, room:r2.room },
+    { time:'1:45 – 2:30',   sortMin:825, activity:'Rotation 3: ' + r3.activity, room:r3.room },
+  ];
+}
+
+function getThursdayRotations(number) {
+  const labels = { elar:'TSIA ELAR', stem:'STEM Challenge', math:'TSIA Math' };
+  const r1 = monThuBlock(number, 'rot1', labels);
+  const r2 = monThuBlock(number, 'rot2', labels);
+  const r3 = monThuBlock(number, 'rot3', labels);
+  return [
+    { time:'8:40 – 9:45',   sortMin:520, activity:'Rotation 1: ' + r1.activity, room:r1.room },
+    { time:'9:50 – 10:55',  sortMin:590, activity:'Rotation 2: ' + r2.activity, room:r2.room },
+    { time:'11:00 – 12:05', sortMin:660, activity:'Rotation 3: ' + r3.activity, room:r3.room },
+  ];
+}
+
+const MON_STUDENT_BLOCKS = [
+  { time:'7:30 – 8:30',   sortMin:450, activity:'Arrival & Breakfast',      room:'JECA Commons' },
+  { time:'8:30 – 9:20',   sortMin:510, activity:'Welcome Kickoff',           room:'JECA Commons' },
+  { time:'9:20 – 9:30',   sortMin:560, activity:'Transition to Rotation 1',  room:'' },
+  { time:'10:45 – 10:50', sortMin:645, activity:'Transition to Rotation 2',  room:'' },
+  { time:'12:05 – 12:15', sortMin:725, activity:'Transition to Lunch',        room:'' },
+  { time:'12:15 – 1:00',  sortMin:735, activity:'Lunch',                     room:'JECA Commons' },
+  { time:'1:00 – 1:05',   sortMin:780, activity:'Transition to Games',        room:'' },
+  { time:'1:05 – 1:35',   sortMin:785, activity:'Games',                     room:'' },
+  { time:'1:35 – 1:45',   sortMin:815, activity:'Transition to Rotation 3',  room:'' },
+  { time:'2:30 – 2:50',   sortMin:870, activity:'Transition to P-TECH 101',  room:'' },
+  { time:'2:50 – 3:20',   sortMin:890, activity:'P-TECH 101',                room:'JECA Commons' },
+  { time:'3:20 – 3:30',   sortMin:920, activity:'Dismissal',                 room:'JECA Commons' },
+];
+
+const THU_STUDENT_BLOCKS = [
+  { time:'7:30 – 8:30',   sortMin:450, activity:'Arrival & Breakfast',      room:'JECA Commons' },
+  { time:'8:30 – 8:40',   sortMin:510, activity:'Transition to Rotation 1', room:'' },
+  { time:'9:45 – 9:50',   sortMin:585, activity:'Transition to Rotation 2', room:'' },
+  { time:'10:55 – 11:00', sortMin:655, activity:'Transition to Rotation 3', room:'' },
+  { time:'12:05 – 12:15', sortMin:725, activity:'Transition to Lunch',       room:'' },
+  { time:'12:15 – 1:00',  sortMin:735, activity:'Lunch',                    room:'' },
+  { time:'1:00 – 1:10',   sortMin:780, activity:'Transition to Games/Pep Rally Prep', room:'' },
+  { time:'1:10 – 1:45',   sortMin:790, activity:'Games / Pep Rally Prep',   room:'' },
+  { time:'2:30 – 2:40',   sortMin:870, activity:'Transition to Pep Rally',  room:'' },
+  { time:'2:30 – 3:30',   sortMin:870, activity:'JISD/NLC Pep Rally',       room:'JECA Commons' },
+  { time:'3:30 – 4:00',   sortMin:930, activity:'Dismissal',                room:'JECA Commons' },
 ];
 
 // ─── Day config ───────────────────────────────────────────────────────────────
 const DAYS = {
+  mon: {
+    label: 'Monday, June 8', short: 'Mon 6/8',
+    type: 'monThu', numGroups: 9,
+    studentBlocks: MON_STUDENT_BLOCKS,
+    csvFile: 'students_mon.csv',
+    getRotations: getMondayRotations,
+  },
   tue: {
     label: 'Tuesday, June 9', short: 'Tue 6/9',
+    type: 'color',
     rotations: TUE_ROTATIONS, rooms: TUE_ROOMS, rotTimes: TUE_ROT_TIMES,
     studentBlocks: TUE_STUDENT_BLOCKS, teacherBlocks: TUE_TEACHER_BLOCKS,
     csvFile: 'students_tue.csv', numGroups: 8,
   },
   wed: {
     label: 'Wednesday, June 10', short: 'Wed 6/10',
+    type: 'color',
     rotations: WED_ROTATIONS, rooms: WED_ROOMS, rotTimes: WED_ROT_TIMES,
     studentBlocks: WED_STUDENT_BLOCKS,
-    // teacher blocks vary — handled in renderTeacherView
     csvFile: 'students_wed.csv', numGroups: 8,
+  },
+  thu: {
+    label: 'Thursday, June 11', short: 'Thu 6/11',
+    type: 'monThu', numGroups: 9,
+    studentBlocks: THU_STUDENT_BLOCKS,
+    csvFile: 'students_thu.csv',
+    getRotations: getThursdayRotations,
   },
 };
 
-// Currently active day — flip this to 'wed' tomorrow
-const ACTIVE_DAY = 'wed';
+// Date-based active day — defaults to today's schedule, falls back to wed
+function getActiveDay() {
+  const now = new Date();
+  const month = now.getMonth() + 1; // 1-indexed
+  const date = now.getDate();
+  if (month === 6 && date === 8)  return 'mon';
+  if (month === 6 && date === 9)  return 'tue';
+  if (month === 6 && date === 10) return 'wed';
+  if (month === 6 && date === 11) return 'thu';
+  return 'wed'; // fallback
+}
+
+const ACTIVE_DAY = getActiveDay();
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let rostersByDay = {};
@@ -221,7 +334,29 @@ function parseCSV(text) {
 
 // ─── Student picker + search ──────────────────────────────────────────────────
 function initPicker() {
-  const day = DAYS[ACTIVE_DAY];
+  const tabsEl = document.getElementById('student-day-tabs');
+  tabsEl.innerHTML = Object.entries(DAYS).map(([key, day]) =>
+    `<button class="day-tab${key === ACTIVE_DAY ? ' active' : ''}"
+      onclick="switchStudentDay('${key}')">${day.short}</button>`
+  ).join('');
+  updateGroupPicker(ACTIVE_DAY);
+}
+
+function switchStudentDay(dayKey) {
+  document.querySelectorAll('#student-day-tabs .day-tab').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`#student-day-tabs .day-tab[onclick*="${dayKey}"]`)?.classList.add('active');
+  updateGroupPicker(dayKey);
+  document.getElementById('student-search').value = '';
+  document.getElementById('student-search-results').innerHTML = '';
+}
+
+function getSelectedStudentDay() {
+  const active = document.querySelector('#student-day-tabs .day-tab.active');
+  if (!active) return ACTIVE_DAY;
+  const match = active.getAttribute('onclick').match(/'(\w+)'/);
+  return match ? match[1] : ACTIVE_DAY;
+}
+  const day = DAYS[dayKey];
   const select = document.getElementById('group-select');
   select.innerHTML = '<option value="">Select your group number…</option>';
   for (let n = 1; n <= day.numGroups; n++) {
@@ -230,12 +365,10 @@ function initPicker() {
     opt.textContent = n;
     select.appendChild(opt);
   }
-}
-
-function onGroupSelect() {
-  const val = document.getElementById('group-select').value;
-  if (!val) return;
-  showStudentSchedule(ACTIVE_DAY, Number(val));
+  select.onchange = () => {
+    const val = select.value;
+    if (val) showStudentSchedule(dayKey, Number(val));
+  };
 }
 
 function onStudentSearch() {
@@ -243,7 +376,8 @@ function onStudentSearch() {
   const out = document.getElementById('student-search-results');
   if (!q) { out.innerHTML = ''; return; }
 
-  const students = rostersByDay[ACTIVE_DAY] || [];
+  const dayKey = getSelectedStudentDay();
+  const students = rostersByDay[dayKey] || [];
   const matches = students.filter(s => s.name.toLowerCase().includes(q));
 
   if (!matches.length) {
@@ -265,12 +399,13 @@ function onStudentSearch() {
 }
 
 function selectStudentByName(name) {
-  const students = rostersByDay[ACTIVE_DAY] || [];
+  const dayKey = getSelectedStudentDay();
+  const students = rostersByDay[dayKey] || [];
   const s = students.find(s => s.name === name);
   if (!s) return;
   document.getElementById('student-search').value = '';
   document.getElementById('student-search-results').innerHTML = '';
-  showStudentSchedule(ACTIVE_DAY, s.number, s.name);
+  showStudentSchedule(dayKey, s.number, s.name);
 }
 
 function showStudentSchedule(dayKey, number, studentName) {
@@ -289,12 +424,13 @@ function showStudentSchedule(dayKey, number, studentName) {
       </div>
     </div>`;
 
-  const rotBlocks = day.rotTimes.map((rt, i) => {
-    const activity = day.rotations[number][i];
-    const roomFull = day.rooms[activity]?.[number] || '';
-    const room = formatRoom(roomFull);
-    return { time: rt.time, sortMin: rt.sortMin, activity, room };
-  });
+  const rotBlocks = day.type === 'monThu'
+    ? day.getRotations(number)
+    : day.rotTimes.map((rt, i) => {
+        const activity = day.rotations[number][i];
+        const roomFull = day.rooms[activity]?.[number] || '';
+        return { time: rt.time, sortMin: rt.sortMin, activity, room: formatRoom(roomFull) };
+      });
 
   // Combine, filter transitions and lunch duty, sort
   const allBlocks = [
@@ -561,8 +697,8 @@ async function init() {
       selectTeacher(savedTeacher);
     }
   }
-  // Restore student only if teacher tab isn't active
   if (savedNumber && savedTab !== 'teacher') {
+    if (savedDay) switchStudentDay(savedDay);
     showStudentSchedule(savedDay, Number(savedNumber), savedName || undefined);
   }
 }
