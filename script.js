@@ -119,8 +119,7 @@ const WED_STUDENT_BLOCKS = [
   { time:'9:45 – 9:50',   sortMin:585, activity:'Transition to Rotation 2', room:'' },
   { time:'10:55 – 11:15', sortMin:655, activity:'Transition to Exploration Rotation', room:'' },
   { time:'11:15 – 12:15', sortMin:675, activity:'Exploration Rotation',   room:'PLXY Bluebonnet' },
-  { time:'12:15 – 12:45', sortMin:735, activity:'Lunch',                  room:'PLXY Bluebonnet' },
-  { time:'12:45 – 1:00',  sortMin:765, activity:'Lunch Duty',             room:'PLXY Bluebonnet' },
+  { time:'12:15 – 1:00', sortMin:735, activity:'Lunch',                  room:'PLXY Bluebonnet' },
   { time:'1:00 – 1:10',   sortMin:780, activity:'Transition to Rotation 3', room:'' },
   { time:'2:15 – 2:20',   sortMin:855, activity:'Transition to Rotation 4', room:'' },
   { time:'3:25 – 3:30',   sortMin:925, activity:'Transition to Dismissal', room:'' },
@@ -288,14 +287,27 @@ function showStudentSchedule(dayKey, number, studentName) {
     return { time: rt.time, sortMin: rt.sortMin, activity, room };
   });
 
+  // Combine, filter transitions and lunch duty, sort
   const allBlocks = [
-    ...day.studentBlocks.filter(b => !b.activity.startsWith('Transition')).map(b => ({
-      time: b.time, sortMin: b.sortMin, activity: b.activity, room: b.room,
-    })),
+    ...day.studentBlocks
+      .filter(b => !b.activity.startsWith('Transition') && b.activity !== 'Lunch Duty')
+      .map(b => ({ time: b.time, sortMin: b.sortMin, activity: b.activity, room: b.room })),
     ...rotBlocks
   ].sort((a, b) => a.sortMin - b.sortMin);
 
-  document.getElementById('student-blocks').innerHTML = allBlocks.map(b => {
+  // Merge consecutive blocks with same activity+room into one time range
+  const merged = [];
+  for (const b of allBlocks) {
+    const prev = merged[merged.length - 1];
+    if (prev && prev.activity === b.activity && prev.room === b.room) {
+      // Extend the end time of the previous block
+      prev.time = prev.time.split('–')[0].trim() + ' – ' + b.time.split('–')[1]?.trim();
+    } else {
+      merged.push({ ...b });
+    }
+  }
+
+  document.getElementById('student-blocks').innerHTML = merged.map(b => {
     const displayTime = b.activity === 'Dismissal' ? b.time.split('–')[0].trim() : b.time;
     return `<div class="sched-block">
       <div class="sched-time">${displayTime}</div>
