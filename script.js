@@ -76,8 +76,19 @@ const TUE_STUDENT_BLOCKS = [
   { time:'3:30 – 4:00',   sortMin:930, activity:'Dismissal',              room:'JECA Commons' },
 ];
 
-// Teacher-facing full blocks (same for all teachers on Tuesday)
-const TUE_TEACHER_BLOCKS = TUE_STUDENT_BLOCKS;
+// Teacher-facing full blocks — lunch has no location (on your own)
+const TUE_TEACHER_BLOCKS = [
+  { time:'7:30 – 8:30',   sortMin:450, activity:'Arrival & Breakfast',   room:'JECA Commons' },
+  { time:'8:30 – 8:40',   sortMin:510, activity:'Transition to Rotation 1', room:'' },
+  { time:'9:45 – 9:50',   sortMin:585, activity:'Transition to Rotation 2', room:'' },
+  { time:'10:55 – 11:15', sortMin:655, activity:'Transition to Exploration Rotation', room:'' },
+  { time:'11:15 – 12:15', sortMin:675, activity:'Exploration Rotation',   room:'PLXY Bluebonnet' },
+  { time:'12:15 – 1:00',  sortMin:735, activity:'Lunch',                  room:'' },
+  { time:'1:00 – 1:10',   sortMin:780, activity:'Transition to Rotation 3', room:'' },
+  { time:'2:15 – 2:20',   sortMin:855, activity:'Transition to Rotation 4', room:'' },
+  { time:'3:25 – 3:30',   sortMin:925, activity:'Transition to Dismissal', room:'' },
+  { time:'3:30 – 4:00',   sortMin:930, activity:'Dismissal',              room:'JECA Commons' },
+];
 
 // ─── WEDNESDAY data ───────────────────────────────────────────────────────────
 const WED_ROTATIONS = {
@@ -119,7 +130,7 @@ const WED_STUDENT_BLOCKS = [
   { time:'9:45 – 9:50',   sortMin:585, activity:'Transition to Rotation 2', room:'' },
   { time:'10:55 – 11:15', sortMin:655, activity:'Transition to Exploration Rotation', room:'' },
   { time:'11:15 – 12:15', sortMin:675, activity:'Exploration Rotation',   room:'PLXY Bluebonnet' },
-  { time:'12:15 – 1:00', sortMin:735, activity:'Lunch',                  room:'PLXY Bluebonnet' },
+  { time:'12:15 – 1:00',  sortMin:735, activity:'Lunch',                  room:'PLXY Bluebonnet' },
   { time:'1:00 – 1:10',   sortMin:780, activity:'Transition to Rotation 3', room:'' },
   { time:'2:15 – 2:20',   sortMin:855, activity:'Transition to Rotation 4', room:'' },
   { time:'3:25 – 3:30',   sortMin:925, activity:'Transition to Dismissal', room:'' },
@@ -129,8 +140,7 @@ const WED_STUDENT_BLOCKS = [
 // Teacher blocks differ by NLC vs on-campus for lunch/exploration
 const WED_TEACHER_BLOCKS_ONCAMPUS = [
   { time:'7:30 – 8:30',   sortMin:450, activity:'Arrival & Breakfast',   room:'JECA Commons' },
-  { time:'11:15 – 11:45', sortMin:675, activity:'Exploration Rotation',  room:'PLXY Bluebonnet' },
-  { time:'11:45 – 12:15', sortMin:705, activity:'Exploration Rotation',  room:'PLXY Bluebonnet' },
+  { time:'11:15 – 12:15', sortMin:675, activity:'Exploration Rotation',  room:'PLXY Bluebonnet' },
   { time:'12:15 – 12:45', sortMin:735, activity:'Lunch',                 room:'' },
   { time:'12:45 – 1:00',  sortMin:765, activity:'Lunch Duty',            room:'PLXY Bluebonnet' },
   { time:'3:30 – 4:00',   sortMin:930, activity:'Dismissal',             room:'JECA Commons' },
@@ -140,8 +150,7 @@ const WED_TEACHER_BLOCKS_NLC = [
   { time:'7:30 – 8:30',   sortMin:450, activity:'Arrival & Breakfast',   room:'JECA Commons' },
   { time:'11:15 – 11:45', sortMin:675, activity:'Exploration Rotation',  room:'PLXY Bluebonnet' },
   { time:'11:45 – 12:15', sortMin:705, activity:'Lunch',                 room:'' },
-  { time:'12:15 – 12:45', sortMin:735, activity:'Lunch Duty',            room:'PLXY Bluebonnet' },
-  { time:'12:45 – 1:00',  sortMin:765, activity:'Lunch Duty',            room:'PLXY Bluebonnet' },
+  { time:'12:15 – 1:00', sortMin:735, activity:'Lunch Duty',            room:'PLXY Bluebonnet' },
   { time:'3:30 – 4:00',   sortMin:930, activity:'Dismissal',             room:'JECA Commons' },
 ];
 
@@ -462,7 +471,21 @@ function renderTeacherView() {
     fullBlocks = TUE_TEACHER_BLOCKS;
   }
 
-  const fullGroupRows = fullBlocks.map(b => ({
+  // Merge consecutive identical activity+room blocks
+  function mergeBlocks(blocks) {
+    const merged = [];
+    for (const b of blocks) {
+      const prev = merged[merged.length - 1];
+      if (prev && prev.activity === b.activity && prev.room === b.room) {
+        prev.time = prev.time.split('–')[0].trim() + ' – ' + b.time.split('–')[1]?.trim();
+      } else {
+        merged.push({ ...b });
+      }
+    }
+    return merged;
+  }
+
+  const fullGroupRows = mergeBlocks(fullBlocks.filter(b => !b.activity.startsWith('Transition'))).map(b => ({
     sortMin: b.sortMin,
     html: `<div class="sched-block">
       <div class="sched-time">${b.time}</div>
@@ -506,7 +529,10 @@ function switchTab(tabId) {
   });
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
-  sessionStorage.setItem('sb_tab', tabId);
+  // Only update saved tab if switching to teacher, or no teacher is active
+  if (tabId === 'teacher' || !sessionStorage.getItem('sb_teacher')) {
+    sessionStorage.setItem('sb_tab', tabId);
+  }
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
@@ -527,9 +553,16 @@ async function init() {
   const savedTeacher = sessionStorage.getItem('sb_teacher');
 
   if (savedTab) switchTab(savedTab);
-  if (savedTab === 'teacher' && savedTeacher) {
-    selectTeacher(savedTeacher);
-  } else if (savedNumber) {
+
+  // Restore teacher regardless of current tab — persists until another teacher is selected
+  if (savedTeacher) {
+    activeTeacher = savedTeacher;
+    if (savedTab === 'teacher') {
+      selectTeacher(savedTeacher);
+    }
+  }
+  // Restore student only if teacher tab isn't active
+  if (savedNumber && savedTab !== 'teacher') {
     showStudentSchedule(savedDay, Number(savedNumber), savedName || undefined);
   }
 }
