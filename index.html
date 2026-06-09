@@ -26,12 +26,12 @@
 
   <!-- STUDENT TAB -->
   <div id="student" class="section active">
-    <!-- Group number picker -->
     <div id="student-picker">
       <p class="label">What number is on your band?</p>
-      <div class="num-grid" id="num-grid"></div>
+      <select id="group-select" onchange="onGroupSelect()" aria-label="Select group number">
+        <option value="">Select your group number…</option>
+      </select>
     </div>
-    <!-- Schedule view -->
     <div id="student-sched-view" style="display:none">
       <button class="back-btn" onclick="clearStudentSchedule()">← Back</button>
       <div id="student-badge"></div>
