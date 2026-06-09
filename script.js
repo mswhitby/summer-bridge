@@ -445,31 +445,30 @@ function selectStudentByName(name) {
 }
 
 function showStudentSchedule(dayKey, number, studentName) {
-  // Group 9 has no rotations on Tue/Wed — redirect to name search
-  if (number === 9 && (dayKey === 'tue' || dayKey === 'wed')) {
-    document.getElementById('group-select').value = '';
-    const out = document.getElementById('student-search-results');
-    out.innerHTML = `<div class="empty-msg" style="color:var(--orange-text);background:var(--orange-bg);padding:12px;border-radius:8px;text-align:left">
-      Group 9 has been reassigned for ${DAYS[dayKey].label.split(',')[0]}. Search your name below to find your group for today.
-    </div>`;
-    document.getElementById('student-search').focus();
-    return;
-  }
-
   activeStudentDay = dayKey;
   const day = DAYS[dayKey];
   const color = GROUP_COLOR[number] || '';
   const c = COLOR[color] || { bg:'var(--color-surface)', text:'var(--color-text)', border:'var(--color-border-strong)' };
 
   const nameDisplay = studentName || `Group ${number}`;
-  document.getElementById('student-badge').innerHTML = `
+  document.getElementById('student-badge').innerHTML = number ? `
     <div class="student-badge" style="margin-bottom:1rem">
       <div class="badge-circle" style="background:${c.bg};color:${c.text};border-color:${c.border}">${number}</div>
       <div>
         <div class="badge-name">${nameDisplay}</div>
         <div class="badge-group">Group ${number}${color ? ' · ' + color : ''} · ${day.label}</div>
       </div>
-    </div>`;
+    </div>` : '';
+
+  // Group 9 has no rotations on Tue/Wed — show notice instead of schedule
+  if (number === 9 && (dayKey === 'tue' || dayKey === 'wed')) {
+    document.getElementById('student-blocks').className = '';
+    document.getElementById('student-blocks').innerHTML = `
+      <div class="notice-card warning">
+        Group 9 has been reassigned for ${day.label.split(',')[0]}.
+        Go back and search your name to find your group for today.
+      </div>`;
+  } else {
 
   const rotBlocks = day.type === 'monThu'
     ? day.getRotations(number)
@@ -509,6 +508,8 @@ function showStudentSchedule(dayKey, number, studentName) {
       ${b.room ? `<div class="sched-room">📍 ${b.room}</div>` : ''}
     </div>`;
   }).join('');
+  document.getElementById('student-blocks').className = 'card';
+  } // end else (not group 9 on Tue/Wed)
 
   // Render day tabs in schedule view
   const tabsEl = document.getElementById('student-day-tabs');
