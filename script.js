@@ -542,15 +542,21 @@ function clearStudentSchedule() {
 
 // ─── Teacher registry ─────────────────────────────────────────────────────────
 const ALL_TEACHERS = [
-  { name:'Garcia',   room:'B206' },
-  { name:'Gilmore',  room:'B202' },
-  { name:'Harwell',  room:'B227' },
-  { name:'Kennedy',  room:'B209' },
-  { name:'Mercado',  room:'B229' },
-  { name:'Miller',   room:'B207' },
-  { name:'Tinoco',   room:'B221' },
-  { name:'Whitby',   room:'B208' },
+  { name:'Brown',   room:'B226' },
+  { name:'Garcia',  room:'B206' },
+  { name:'Gilmore', room:'B202' },
+  { name:'Harwell', room:'B227' },
+  { name:'Kennedy', room:'B209' },
+  { name:'Mercado', room:'B229' },
+  { name:'Miller',  room:'B207' },
+  { name:'Tinoco',  room:'B221' },
+  { name:'Whitby',  room:'B208' },
 ].sort((a, b) => a.name.localeCompare(b.name));
+
+// Teachers with no schedule on specific days
+const TEACHER_ABSENT = {
+  Brown: ['tue', 'wed'],
+};
 
 // ─── Teacher schedule builder ─────────────────────────────────────────────────
 function getTeacherSchedule(teacherName, dayKey) {
@@ -660,6 +666,13 @@ function renderTeacherView() {
   const notice = isNLCTraveler && (dayKey === 'tue' || dayKey === 'wed')
     ? `<div class="nlc-travel-card">🚌 You are traveling to NLC today. Your location each rotation is listed below.</div>`
     : '';
+
+  // Teacher absent on this day — show notice instead of schedule
+  if (TEACHER_ABSENT[name]?.includes(dayKey)) {
+    document.getElementById('teacher-blocks').innerHTML =
+      `<div class="notice-card warning">No schedule found for ${day.label.split(',')[0]}.</div>`;
+    return;
+  }
 
   const rotations = getTeacherSchedule(name, dayKey);
   const students = rostersByDay[dayKey] || [];
