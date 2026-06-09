@@ -381,8 +381,8 @@ function getTeacherScheduleNumbered(teacherName, dayKey, students, isNLCTraveler
   const isMon = dayKey === 'mon';
   const rotSlots = ['rot1', 'rot2', 'rot3'];
   const times = isMon
-    ? ['9:30 – 10:45', '10:50 – 12:05', '1:45 – 2:30']
-    : ['8:40 – 9:45',  '9:50 – 10:55',  '11:00 – 12:05'];
+    ? [{ t:'9:30 – 10:45', s:570 }, { t:'10:50 – 12:05', s:650 }, { t:'1:45 – 2:30', s:825 }]
+    : [{ t:'8:40 – 9:45',  s:520 }, { t:'9:50 – 10:55',  s:590 }, { t:'11:00 – 12:05', s:660 }];
 
   // Find which subject this teacher teaches (elar/stem/math) and their room color tier
   let teacherSubj = null;
@@ -408,7 +408,8 @@ function getTeacherScheduleNumbered(teacherName, dayKey, students, isNLCTraveler
     const matchNums = nums.filter(n => tierRange.includes(n));
     const incoming = students.filter(s => matchNums.includes(s.number));
     return {
-      time: times[i],
+      time: times[i].t,
+      sortMin: times[i].s,
       activity: MON_THU_LABELS[teacherSubj],
       location: teacherRoomStr,
       traveling: false,
@@ -422,8 +423,8 @@ function getTeacherScheduleColor(teacherName, dayKey, students, isNLCTraveler) {
   const rooms = dayKey === 'tue' ? ROOMS_TUE : ROOMS_WED;
   const isTue = dayKey === 'tue';
   const times = isTue
-    ? ['8:40 – 9:45', '9:50 – 10:55', '1:10 – 2:15', '2:20 – 3:25']
-    : ['8:40 – 9:55', '10:00 – 11:15', '12:45 – 2:00', '2:05 – 3:20'];
+    ? [{ t:'8:40 – 9:45', s:520 }, { t:'9:50 – 10:55', s:590 }, { t:'1:10 – 2:15', s:790 }, { t:'2:20 – 3:25', s:860 }]
+    : [{ t:'8:40 – 9:55', s:520 }, { t:'10:00 – 11:15', s:600 }, { t:'12:45 – 2:00', s:765 }, { t:'2:05 – 3:20', s:845 }];
 
   // For each rotation, find which color+number groups come to this teacher
   // We check all possible students and see if their computed room matches this teacher
@@ -491,17 +492,28 @@ function getTeacherScheduleColor(teacherName, dayKey, students, isNLCTraveler) {
       location = '';
     }
 
-    // Determine activity label
-    let activity = 'Prep / No students';
+    // Activity label — just use the subject the teacher is teaching
+    let activity = '';
     if (incoming.length > 0) {
-      if (isTue) {
-        activity = { rot1:'Rotation 1', rot2:'Rotation 2', rot3:'Rotation 3', rot4:'Rotation 4' }[rotKey];
-      } else {
-        activity = { rot1:'Rotation 1', rot2:'Rotation 2', rot3:'Rotation 3', rot4:'Rotation 4' }[rotKey];
-      }
+      // Find the subject from one incoming student's room assignment
+      const s0 = incoming[0];
+      const nlcR = rooms.nlc[s0.color]?.[s0.number - 1];
+      const elarR = rooms.elar[s0.color];
+      const mathR = rooms.math[s0.color];
+      const rotDef = {
+        rot1: { Orange: nlcR,  Yellow: nlcR,  Green: elarR, Blue: mathR },
+        rot2: { Orange: nlcR,  Yellow: nlcR,  Green: mathR, Blue: elarR },
+        rot3: { Orange: elarR, Yellow: mathR, Green: nlcR,  Blue: nlcR  },
+        rot4: { Orange: mathR, Yellow: elarR, Green: nlcR,  Blue: nlcR  },
+      };
+      const room0 = rotDef[rotKey][s0.color] || '';
+      if (room0 === nlcR) activity = 'NLC';
+      else if (room0 === elarR) activity = 'TSI ELAR';
+      else if (room0 === mathR) activity = 'TSI Math';
+      else activity = 'Rotation';
     }
 
-    return { time: times[i], activity, location, traveling, students: incoming };
+    return { time: times[i].t, sortMin: times[i].s, activity, location, traveling, students: incoming };
   });
 }
 
@@ -579,7 +591,14 @@ function renderTeacherView() {
     notice = `<div class="nlc-travel-card">🚌 You are traveling to NLC today. You move with your assigned student group — your location each rotation is listed below.</div>`;
   }
 
-  const teacherHomeRoom = t?.room ? `${name}-${t.room}` : null;
+  const teacherHomeRoom = t?.room || '';
+
+  // Strip teacher name from room string: "Miller-B207" → "B207"
+  function stripRoom(roomStr) {
+    if (!roomStr) return '';
+    const parts = roomStr.split('-');
+    return parts.length > 1 ? parts[parts.length - 1] : roomStr;
+  }
 
   // Full-group blocks (shared activities all teachers attend)
   const fullGroupBlocks = {
@@ -613,47 +632,49 @@ function renderTeacherView() {
     ],
   };
 
-  // Parse "H:MM" start time to minutes for sorting
-  function toMin(timeStr) {
-    const [h, m] = timeStr.split('–')[0].trim().split(':').map(Number);
-    return h * 60 + m;
-  }
+  // Build merged timeline — skip rotations with no students
+  const rotationRows = rotations
+    .filter(rot => rot.students.length > 0)
+    .map((rot, i) => {
+      const rotId = `rot-roster-${i}`;
+      const count = rot.students.length;
+      const firstStudent = rot.students[0];
 
-  // Build merged timeline: rotation rows get group+roster, full-group rows are plain
-  const rotationRows = rotations.map((rot, i) => {
-    const rotId = `rot-roster-${i}`;
-    const count = rot.students.length;
-    const firstStudent = rot.students[0];
+      const groupPillHtml = firstStudent
+        ? (() => { const c = COLOR[firstStudent.color] || COLOR.Blue;
+            return `<span class="group-pill" style="background:${c.bg};color:${c.text};border:1.5px solid ${c.border}">${firstStudent.color} · ${firstStudent.number}</span>`; })()
+        : '';
 
-    const groupPillHtml = firstStudent
-      ? (() => { const c = COLOR[firstStudent.color] || COLOR.Blue;
-          return `<span class="group-pill" style="background:${c.bg};color:${c.text};border:1.5px solid ${c.border}">${firstStudent.color} · ${firstStudent.number}</span>`; })()
-      : '';
+      // Show room only if different from home room, stripped of teacher name
+      const locStripped = stripRoom(rot.location);
+      const awayFromRoom = locStripped && locStripped !== teacherHomeRoom;
+      const locationHtml = awayFromRoom
+        ? `<div class="sched-room${rot.traveling ? ' traveling' : ''}">📍 ${locStripped}</div>` : '';
 
-    const awayFromRoom = rot.location && rot.location !== teacherHomeRoom;
-    const locationHtml = awayFromRoom
-      ? `<div class="sched-room${rot.traveling ? ' traveling' : ''}">📍 ${rot.location}</div>` : '';
+      // Show home room when teacher stays put
+      const homeRoomHtml = !awayFromRoom && teacherHomeRoom
+        ? `<div class="sched-room">📍 ${teacherHomeRoom}</div>` : '';
 
-    const rosterLabel = count ? `${count} student${count !== 1 ? 's' : ''}` : 'No students';
-    const rosterRows = count
-      ? rot.students.map(s => `<div class="student-chip"><div class="chip-name">${s.name}</div></div>`).join('')
-      : `<div class="no-students">No students this rotation</div>`;
+      const rosterLabel = `${count} student${count !== 1 ? 's' : ''}`;
+      const rosterRows = rot.students
+        .map(s => `<div class="student-chip"><div class="chip-name">${s.name}</div></div>`).join('');
 
-    return {
-      sortMin: toMin(rot.time),
-      html: `<div class="sched-block">
-        <div class="sched-time">${rot.time}</div>
-        <div class="sched-activity">${rot.activity}</div>
-        ${groupPillHtml}
-        ${locationHtml}
-        <div class="roster-toggle-row" onclick="toggleRoster('${rotId}')" style="cursor:pointer;margin-top:6px;display:flex;align-items:center;gap:6px">
-          <span class="roster-count">${rosterLabel}</span>
-          <span class="toggle-arrow" id="${rotId}-arrow">▸</span>
-        </div>
-        <div class="rot-roster" id="${rotId}" style="display:none;margin-top:4px">${rosterRows}</div>
-      </div>`
-    };
-  });
+      return {
+        sortMin: rot.sortMin,
+        html: `<div class="sched-block">
+          <div class="sched-time">${rot.time}</div>
+          <div class="sched-activity">${rot.activity}</div>
+          ${groupPillHtml}
+          ${homeRoomHtml}
+          ${locationHtml}
+          <div class="roster-toggle-row" onclick="toggleRoster('${rotId}')" style="cursor:pointer;margin-top:6px;display:flex;align-items:center;gap:6px">
+            <span class="roster-count">${rosterLabel}</span>
+            <span class="toggle-arrow" id="${rotId}-arrow">▸</span>
+          </div>
+          <div class="rot-roster" id="${rotId}" style="display:none;margin-top:4px">${rosterRows}</div>
+        </div>`
+      };
+    });
 
   const fullGroupRows = (fullGroupBlocks[dayKey] || []).map(b => ({
     sortMin: b.sortMin,
