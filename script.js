@@ -266,7 +266,7 @@ function renderTeacherView() {
       <div class="teacher-avatar">${name.charAt(0)}</div>
       <div>
         <div class="teacher-name">${name}</div>
-        <div class="teacher-room">${t?.room || ''}${isNLCTraveler ? ' · NLC traveler' : ''}</div>
+        <div class="teacher-room">${t?.room || ''}</div>
       </div>
     </div>`;
 
@@ -308,7 +308,9 @@ function renderTeacherView() {
     };
   });
 
-  const fullGroupRows = TUE_FULL_BLOCKS.map(b => ({
+  const fullGroupRows = TUE_FULL_BLOCKS
+    .filter(b => !b.activity.startsWith('Transition'))
+    .map(b => ({
     sortMin: b.sortMin,
     html: `<div class="sched-block">
       <div class="sched-time">${b.time}</div>
