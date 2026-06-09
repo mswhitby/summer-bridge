@@ -18,14 +18,14 @@ const GROUP_COLOR = {
 // ─── Tuesday rotation schedule ────────────────────────────────────────────────
 // Group number (1-8) determines column; column determines all 4 rotations
 const TUE_ROTATIONS = {
-  1: ['NLC HSP Orientation (PLXY 100)',    'NLC Advising (PLXY Bluebonnet)', 'TSI Math',                       'TSI ELAR'                        ],
-  2: ['NLC Advising (PLXY Bluebonnet)',    'NLC HSP Orientation (PLXY 100)', 'TSI ELAR',                       'TSI Math'                        ],
-  3: ['TSI Math',                          'TSI ELAR',                       'NLC HSP Orientation (PLXY 100)', 'NLC Advising (PLXY Bluebonnet)'  ],
-  4: ['TSI ELAR',                          'TSI Math',                       'NLC Advising (PLXY Bluebonnet)', 'NLC HSP Orientation (PLXY 100)'  ],
-  5: ['NLC Advising (PLXY Bluebonnet)',    'NLC HSP Orientation (PLXY 100)', 'TSI ELAR',                       'TSI Math'                        ],
-  6: ['TSI Math',                          'TSI ELAR',                       'NLC HSP Orientation (PLXY 100)', 'NLC Advising (PLXY Bluebonnet)'  ],
-  7: ['TSI ELAR',                          'TSI Math',                       'NLC Advising (PLXY Bluebonnet)', 'NLC HSP Orientation (PLXY 100)'  ],
-  8: ['NLC HSP Orientation (PLXY 100)',    'NLC Advising (PLXY Bluebonnet)', 'TSI Math',                       'TSI ELAR'                        ],
+  1: ['NLC HSP Orientation',    'NLC Advising', 'TSI Math',                       'TSI ELAR'                        ],
+  2: ['NLC Advising',    'NLC HSP Orientation', 'TSI ELAR',                       'TSI Math'                        ],
+  3: ['TSI Math',                          'TSI ELAR',                       'NLC HSP Orientation', 'NLC Advising'  ],
+  4: ['TSI ELAR',                          'TSI Math',                       'NLC Advising', 'NLC HSP Orientation'  ],
+  5: ['NLC Advising',    'NLC HSP Orientation', 'TSI ELAR',                       'TSI Math'                        ],
+  6: ['TSI Math',                          'TSI ELAR',                       'NLC HSP Orientation', 'NLC Advising'  ],
+  7: ['TSI ELAR',                          'TSI Math',                       'NLC Advising', 'NLC HSP Orientation'  ],
+  8: ['NLC HSP Orientation',    'NLC Advising', 'TSI Math',                       'TSI ELAR'                        ],
 };
 
 // Room for each activity by group number — stripped display version for students
@@ -39,12 +39,12 @@ const TUE_ROOMS = {
     1:'Kennedy-B209', 2:'Kennedy-B209', 3:'Kennedy-B209', 4:'Kennedy-B209',
     5:'Tinoco-B221',  6:'Tinoco-B221',  7:'Tinoco-B221',  8:'Tinoco-B221',
   },
-  'NLC Advising (PLXY Bluebonnet)': {
+  'NLC Advising': {
     1:'Whitby-PLXY Bluebonnet',  2:'Harwell-PLXY Bluebonnet', 3:'Harwell-PLXY Bluebonnet',
     4:'Whitby-PLXY Bluebonnet',  5:'Mercado-PLXY Bluebonnet', 6:'Mercado-PLXY Bluebonnet',
     7:'Gilmore-PLXY Bluebonnet', 8:'Gilmore-PLXY Bluebonnet',
   },
-  'NLC HSP Orientation (PLXY 100)': {
+  'NLC HSP Orientation': {
     1:'Whitby-PLXY 100',  2:'Harwell-PLXY 100', 3:'Harwell-PLXY 100',
     4:'Whitby-PLXY 100',  5:'Mercado-PLXY 100', 6:'Mercado-PLXY 100',
     7:'Gilmore-PLXY 100', 8:'Gilmore-PLXY 100',
@@ -74,7 +74,7 @@ const TUE_FULL_BLOCKS = [
   { time:'7:30 – 8:30',   sortMin:450, activity:'Arrival & Breakfast',  room:'JECA Commons' },
   { time:'8:30 – 8:40',   sortMin:510, activity:'Transition to Rotation 1', room:'' },
   { time:'9:45 – 9:50',   sortMin:585, activity:'Transition to Rotation 2', room:'' },
-  { time:'10:55 – 11:15', sortMin:655, activity:'Transition to PLXY Bluebonnet', room:'' },
+  { time:'10:55 – 11:15', sortMin:655, activity:'Transition to Exploration Rotation', room:'' },
   { time:'11:15 – 12:15', sortMin:675, activity:'Exploration Rotation',  room:'PLXY Bluebonnet' },
   { time:'12:15 – 1:00',  sortMin:735, activity:'Lunch',                 room:'JECA Student Commons' },
   { time:'1:00 – 1:10',   sortMin:780, activity:'Transition to Rotation 3', room:'' },
