@@ -346,37 +346,28 @@ function parseCSV(text) {
 
 // ─── Student picker + search ──────────────────────────────────────────────────
 function initPicker() {
-  const tabsEl = document.getElementById('student-day-tabs');
-  if (!tabsEl) return;
-  tabsEl.innerHTML = Object.entries(DAYS).map(([key, day]) =>
-    `<button class="day-tab${key === ACTIVE_DAY ? ' active' : ''}"
-      onclick="switchStudentDay('${key}')">${day.short}</button>`
-  ).join('');
   updateGroupPicker(ACTIVE_DAY);
 }
 
 function switchStudentDay(dayKey) {
-  const schedView = document.getElementById('student-sched-view');
-  const inScheduleView = schedView.style.display !== 'none';
+  const savedNumber = sessionStorage.getItem('sb_student_number');
+  const savedName   = sessionStorage.getItem('sb_student_name');
 
-  if (inScheduleView) {
-    // Re-render schedule for same student on new day
-    const savedNumber = sessionStorage.getItem('sb_student_number');
-    const savedName   = sessionStorage.getItem('sb_student_name');
-    if (savedNumber) {
-      showStudentSchedule(dayKey, Number(savedNumber), savedName || undefined);
-    } else {
-      // Friday or no number — just show Friday schedule
-      showStudentSchedule(dayKey, null);
+  // If we have a name, look up their actual group for this day from the roster
+  if (savedName) {
+    const students = rostersByDay[dayKey] || [];
+    const s = students.find(s => s.name === savedName);
+    if (s) {
+      showStudentSchedule(dayKey, s.number, s.name);
+      return;
     }
+  }
+
+  // Fall back to saved number if no name match
+  if (savedNumber) {
+    showStudentSchedule(dayKey, Number(savedNumber), savedName || undefined);
   } else {
-    // In picker — update picker for new day
-    updateGroupPicker(dayKey);
-    document.getElementById('student-search').value = '';
-    document.getElementById('student-search-results').innerHTML = '';
-    if (DAYS[dayKey].type === 'noRotations') {
-      showStudentSchedule(dayKey, null);
-    }
+    showStudentSchedule(dayKey, null);
   }
 }
 
@@ -404,7 +395,7 @@ function updateGroupPicker(dayKey) {
   groupSelect.style.display = '';
   groupSelect.value = '';
   groupSelect.innerHTML = '<option value="">Select your group number…</option>';
-  for (let n = 1; n <= day.numGroups; n++) {
+  for (let n = 1; n <= 9; n++) {
     const opt = document.createElement('option');
     opt.value = n;
     opt.textContent = n;
@@ -412,7 +403,7 @@ function updateGroupPicker(dayKey) {
   }
   groupSelect.onchange = () => {
     const val = groupSelect.value;
-    if (val) showStudentSchedule(dayKey, Number(val));
+    if (val) showStudentSchedule(ACTIVE_DAY, Number(val));
   };
 }
 
@@ -454,6 +445,17 @@ function selectStudentByName(name) {
 }
 
 function showStudentSchedule(dayKey, number, studentName) {
+  // Group 9 has no rotations on Tue/Wed — redirect to name search
+  if (number === 9 && (dayKey === 'tue' || dayKey === 'wed')) {
+    document.getElementById('group-select').value = '';
+    const out = document.getElementById('student-search-results');
+    out.innerHTML = `<div class="empty-msg" style="color:var(--orange-text);background:var(--orange-bg);padding:12px;border-radius:8px;text-align:left">
+      Group 9 has been reassigned for ${DAYS[dayKey].label.split(',')[0]}. Search your name below to find your group for today.
+    </div>`;
+    document.getElementById('student-search').focus();
+    return;
+  }
+
   activeStudentDay = dayKey;
   const day = DAYS[dayKey];
   const color = GROUP_COLOR[number] || '';
@@ -532,7 +534,9 @@ function clearStudentSchedule() {
   sessionStorage.removeItem('sb_student_day');
   document.getElementById('student-sched-view').style.display = 'none';
   document.getElementById('student-picker').style.display = '';
-  updateGroupPicker(ACTIVE_DAY);
+  document.getElementById('group-select').value = '';
+  document.getElementById('student-search').value = '';
+  document.getElementById('student-search-results').innerHTML = '';
 }
 
 // ─── Teacher registry ─────────────────────────────────────────────────────────
