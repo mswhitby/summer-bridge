@@ -51,11 +51,15 @@ const TUE_ROOMS = {
   },
 };
 
-// Strip teacher name from room string for student display: "Miller-B207" → "B207"
-function stripTeacher(roomStr) {
+// Format room string for student display: "Whitby-B208" → "Whitby - 208"
+function formatRoom(roomStr) {
   if (!roomStr) return '';
   const i = roomStr.indexOf('-');
-  return i > -1 ? roomStr.substring(i + 1) : roomStr;
+  if (i === -1) return roomStr;
+  const teacher = roomStr.substring(0, i);
+  const room = roomStr.substring(i + 1);
+  const roomNum = room.startsWith('B') && !isNaN(room.substring(1)) ? room.substring(1) : room;
+  return `${teacher} - ${roomNum}`;
 }
 
 // NLC travelers
@@ -143,7 +147,7 @@ function showStudentSchedule(number) {
   const rotBlocks = TUE_ROT_TIMES.map((rt, i) => {
     const activity = TUE_ROTATIONS[number][i];
     const roomFull = TUE_ROOMS[activity]?.[number] || '';
-    const room = stripTeacher(roomFull);
+    const room = formatRoom(roomFull);
     return { time: rt.time, sortMin: rt.sortMin, activity, room };
   });
 
@@ -206,7 +210,7 @@ function getTeacherScheduleTue(teacherName) {
       ? TUE_ROTATIONS[matchingGroups[0]][rotIdx] : '';
     const roomFull = matchingGroups.length > 0
       ? TUE_ROOMS[activity]?.[matchingGroups[0]] || '' : '';
-    const location = stripTeacher(roomFull);
+    const location = formatRoom(roomFull);
     const traveling = NLC_TRAVELERS.has(teacherName);
 
     return {
