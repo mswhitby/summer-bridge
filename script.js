@@ -96,26 +96,22 @@ let activeTeacher = null;
 
 // ─── CSV loading ──────────────────────────────────────────────────────────────
 async function loadAllRosters() {
-  // Load master roster
+  const bust = '?v=' + Date.now();
   let master = [];
   try {
-    const res = await fetch('students_master.csv');
+    const res = await fetch('students_master.csv' + bust);
     if (res.ok) master = parseCSV(await res.text());
   } catch (_) {}
 
-  // Load Tuesday overrides — merge on top of master by name
-  // Day CSV only needs to list students whose group changes that day
   let overrides = [];
   try {
-    const res = await fetch('students_tue.csv');
+    const res = await fetch('students_tue.csv' + bust);
     if (res.ok) overrides = parseCSV(await res.text());
   } catch (_) {}
 
   if (overrides.length) {
     const overrideMap = new Map(overrides.map(s => [s.name, s]));
-    // Replace matching students, keep everyone else from master
     rostersByDay['tue'] = master.map(s => overrideMap.has(s.name) ? overrideMap.get(s.name) : s);
-    // Also add any override students not in master (shouldn't happen but safe)
     for (const s of overrides) {
       if (!master.find(m => m.name === s.name)) rostersByDay['tue'].push(s);
     }
@@ -210,39 +206,19 @@ function showStudentSchedule(number, studentName) {
     const activity = TUE_ROTATIONS[number][i];
     const roomFull = TUE_ROOMS[activity]?.[number] || '';
     const room = formatRoom(roomFull);
-
-    // Roster for this rotation
-    const groupStudents = (rostersByDay['tue'] || []).filter(s => s.number === number);
-    const rosterId = `student-rot-${i}`;
-    const rosterHtml = groupStudents.length
-      ? groupStudents.map(s => `<div class="student-chip"><div class="chip-name">${s.name}</div></div>`).join('')
-      : '<div class="no-students">No roster loaded</div>';
-
-    return {
-      time: rt.time, sortMin: rt.sortMin, activity, room,
-      rosterId, rosterHtml, count: groupStudents.length
-    };
+    return { time: rt.time, sortMin: rt.sortMin, activity, room };
   });
 
   const allBlocks = [...TUE_FULL_BLOCKS.filter(b => !b.activity.startsWith('Transition')).map(b => ({
     time: b.time, sortMin: b.sortMin, activity: b.activity, room: b.room,
-    rosterId: null
   })), ...rotBlocks].sort((a, b) => a.sortMin - b.sortMin);
 
-  document.getElementById('student-blocks').innerHTML = allBlocks.map(b => {
-    const rosterToggle = b.rosterId ? `
-      <div class="roster-toggle-row" onclick="toggleRoster('${b.rosterId}')" style="cursor:pointer;margin-top:6px;display:flex;align-items:center;gap:6px">
-        <span class="roster-count">${b.count} student${b.count !== 1 ? 's' : ''}</span>
-        <span class="toggle-arrow" id="${b.rosterId}-arrow">▸</span>
-      </div>
-      <div class="rot-roster" id="${b.rosterId}" style="display:none;margin-top:4px">${b.rosterHtml}</div>` : '';
-    return `<div class="sched-block">
+  document.getElementById('student-blocks').innerHTML = allBlocks.map(b => `
+    <div class="sched-block">
       <div class="sched-time">${b.time}</div>
       <div class="sched-activity">${b.activity}</div>
       ${b.room ? `<div class="sched-room">📍 ${b.room}</div>` : ''}
-      ${rosterToggle}
-    </div>`;
-  }).join('');
+    </div>`).join('');
 
   document.getElementById('student-picker').style.display = 'none';
   document.getElementById('student-sched-view').style.display = '';
