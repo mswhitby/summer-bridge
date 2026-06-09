@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>P-TECH Summer Bridge Schedule</title>
   <script>
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = 'style.css?v=' + Date.now();
-  document.head.appendChild(link);
-</script>
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'style.css?v=' + Date.now();
+    document.head.appendChild(link);
+  </script>
 </head>
 <body>
 <div class="app">
@@ -26,15 +26,15 @@
 
   <!-- STUDENT TAB -->
   <div id="student" class="section active">
-    <div id="student-search-wrap" class="search-wrap">
-      <input type="text" id="student-search" placeholder="Search your name…"
-             oninput="onStudentSearch()" autocomplete="off" aria-label="Search student name">
-      <div id="student-results"></div>
+    <!-- Group number picker -->
+    <div id="student-picker">
+      <p class="label">What number is on your band?</p>
+      <div class="num-grid" id="num-grid"></div>
     </div>
+    <!-- Schedule view -->
     <div id="student-sched-view" style="display:none">
-      <button class="back-btn" onclick="clearStudentSchedule()">← Back to search</button>
+      <button class="back-btn" onclick="clearStudentSchedule()">← Back</button>
       <div id="student-badge"></div>
-      <div id="student-day-tabs"></div>
       <div id="student-blocks" class="card"></div>
     </div>
   </div>
@@ -55,11 +55,10 @@
   </div>
 
 </div>
-<!-- <script src="script.js"></script> -->
- <script>
-    const s = document.createElement('script');
-    s.src = 'script.js?v=' + Date.now();
-    document.body.appendChild(s);
-  </script>
+<script>
+  const s = document.createElement('script');
+  s.src = 'script.js?v=' + Date.now();
+  document.body.appendChild(s);
+</script>
 </body>
 </html>
