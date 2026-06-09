@@ -194,9 +194,9 @@ function getMondayRotations(number) {
   const r2 = monThuBlock(number, 'rot2', labels);
   const r3 = monThuBlock(number, 'rot3', labels);
   return [
-    { time:'9:30 – 10:45',  sortMin:570, activity:'Rotation 1: ' + r1.activity, room:r1.room },
-    { time:'10:50 – 12:05', sortMin:650, activity:'Rotation 2: ' + r2.activity, room:r2.room },
-    { time:'1:45 – 2:30',   sortMin:825, activity:'Rotation 3: ' + r3.activity, room:r3.room },
+    { time:'9:30 – 10:45',  sortMin:570, activity:r1.activity, room:r1.room },
+    { time:'10:50 – 12:05', sortMin:650, activity:r2.activity, room:r2.room },
+    { time:'1:45 – 2:30',   sortMin:825, activity:r3.activity, room:r3.room },
   ];
 }
 
@@ -206,9 +206,9 @@ function getThursdayRotations(number) {
   const r2 = monThuBlock(number, 'rot2', labels);
   const r3 = monThuBlock(number, 'rot3', labels);
   return [
-    { time:'8:40 – 9:45',   sortMin:520, activity:'Rotation 1: ' + r1.activity, room:r1.room },
-    { time:'9:50 – 10:55',  sortMin:590, activity:'Rotation 2: ' + r2.activity, room:r2.room },
-    { time:'11:00 – 12:05', sortMin:660, activity:'Rotation 3: ' + r3.activity, room:r3.room },
+    { time:'8:40 – 9:45',   sortMin:520, activity:r1.activity, room:r1.room },
+    { time:'9:50 – 10:55',  sortMin:590, activity:r2.activity, room:r2.room },
+    { time:'11:00 – 12:05', sortMin:660, activity:r3.activity, room:r3.room },
   ];
 }
 
