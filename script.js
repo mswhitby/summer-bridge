@@ -147,12 +147,15 @@ function onStudentSearch() {
     return;
   }
 
-  // Dedupe by name
   const seen = new Set();
-  let html = '';
+  const uniqueMatches = [];
   for (const s of matches) {
-    if (seen.has(s.name)) continue;
-    seen.add(s.name);
+    if (!seen.has(s.name)) { seen.add(s.name); uniqueMatches.push(s); }
+  }
+  uniqueMatches.sort((a, b) => a.name.localeCompare(b.name));
+
+  let html = '';
+  for (const s of uniqueMatches) {
     html += `<div class="result-row" onclick="selectStudentByName('${s.name.replace(/'/g,"\\'")}')">
       <div class="result-name">${s.name}</div>
     </div>`;
@@ -338,17 +341,34 @@ function renderTeacherView() {
   // Rotation rows — show all 4, not just ones with students
   const rotationRows = rotations.map((rot, i) => {
     const rotId = `rot-${i}`;
+    const students = rostersByDay['tue'] || [];
 
-    // Group pills for each group coming to this teacher
+    // Group pills and roster for each group coming to this teacher
     const groupPills = rot.groups.map(n => {
       const color = GROUP_COLOR[n] || '';
       const c = COLOR[color] || { bg:'var(--color-surface)', text:'var(--color-text)', border:'var(--color-border-strong)' };
       return `<span class="group-pill" style="background:${c.bg};color:${c.text};border:1px solid ${c.border};margin-right:4px">Group ${n}</span>`;
     }).join('');
 
+    // Students in each of the incoming groups
+    const incomingStudents = students
+      .filter(s => rot.groups.includes(s.number))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const count = incomingStudents.length;
+    const rosterRows = count
+      ? incomingStudents.map(s => `<div class="student-chip"><div class="chip-name">${s.name}</div></div>`).join('')
+      : '<div class="no-students">No roster loaded</div>';
+
     const locationHtml = rot.location
       ? `<div class="sched-room">📍 ${rot.location}</div>`
       : '';
+
+    const rosterToggle = `
+      <div class="roster-toggle-row" onclick="toggleRoster('${rotId}')" style="cursor:pointer;margin-top:6px;display:flex;align-items:center;gap:6px">
+        <span class="roster-count">${count} student${count !== 1 ? 's' : ''}</span>
+        <span class="toggle-arrow" id="${rotId}-arrow">▸</span>
+      </div>
+      <div class="rot-roster" id="${rotId}" style="display:none;margin-top:4px">${rosterRows}</div>`;
 
     return {
       sortMin: rot.sortMin,
@@ -357,6 +377,7 @@ function renderTeacherView() {
         <div class="sched-activity">${rot.activity || 'No students'}</div>
         <div style="margin-top:4px">${groupPills}</div>
         ${locationHtml}
+        ${rosterToggle}
       </div>`
     };
   });
