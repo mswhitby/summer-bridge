@@ -233,7 +233,7 @@ const THU_STUDENT_BLOCKS = [
   { time:'9:45 – 9:50',   sortMin:585, activity:'Transition to Rotation 2', room:'' },
   { time:'10:55 – 11:00', sortMin:655, activity:'Transition to Rotation 3', room:'' },
   { time:'12:05 – 12:15', sortMin:725, activity:'Transition to Lunch',       room:'' },
-  { time:'12:15 – 1:00',  sortMin:735, activity:'Lunch',                    room:'' },
+  { time:'12:15 – 1:00',  sortMin:735, activity:'Lunch',                    room:'JECA Commons' },
   { time:'1:00 – 1:10',   sortMin:780, activity:'Transition to Pep Rally Prep', room:'' },
   { time:'1:10 – 1:45',   sortMin:790, activity:'Games / Pep Rally Prep',   room:'' },
   { time:'2:30 – 2:40',   sortMin:870, activity:'Transition to Pep Rally',  room:'' },
