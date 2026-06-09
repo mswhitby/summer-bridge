@@ -356,6 +356,8 @@ function getSelectedStudentDay() {
   const match = active.getAttribute('onclick').match(/'(\w+)'/);
   return match ? match[1] : ACTIVE_DAY;
 }
+
+function updateGroupPicker(dayKey) {
   const day = DAYS[dayKey];
   const select = document.getElementById('group-select');
   select.innerHTML = '<option value="">Select your group number…</option>';
