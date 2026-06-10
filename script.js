@@ -595,7 +595,7 @@ const ALL_TEACHERS = [
 
 // Teachers with no schedule on specific days
 const TEACHER_ABSENT = {
-  Brown: ['tue', 'wed'],
+  Brown: ['tue', 'wed', 'thu'],
 };
 
 // ─── Teacher schedule builder ─────────────────────────────────────────────────
