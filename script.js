@@ -200,25 +200,25 @@ function getMondayRotations(number) {
   ];
 }
 
-// Thursday STEM room assignments — split groups divided by first name for equal distribution
+// Thursday STEM room assignments — split groups divided by first name initial
+// Group 1: A–I (11) Mercado | J–Z (9) Harwell
+// Group 2: A–I (10) Mercado | J–Z (11) Harwell
+// Group 3: A–D (9) Mercado  | E–Z (11) Harwell
 const THU_STEM_ROOMS = {
-  // rot1 STEM: groups 2(split), 5(Mercado), 8(Harwell)
   rot1: {
-    2: 'Mercado-B229 (A–Ayden) / Harwell-B227 (Iszella–Z)',
-    5: 'Mercado-B229',
-    8: 'Harwell-B227',
+    2: ['Mercado-B229 (First name A–I)', 'Harwell-B227 (First name J–Z)'],
+    5: ['Mercado-B229'],
+    8: ['Harwell-B227'],
   },
-  // rot2 STEM: groups 1(split), 4(Mercado), 7(Harwell)
   rot2: {
-    1: 'Mercado-B229 (A–Amariah) / Harwell-B227 (Aubree–Z)',
-    4: 'Mercado-B229',
-    7: 'Harwell-B227',
+    1: ['Mercado-B229 (First name A–I)', 'Harwell-B227 (First name J–Z)'],
+    4: ['Mercado-B229'],
+    7: ['Harwell-B227'],
   },
-  // rot3 STEM: groups 3(split), 6(Mercado), 9(Harwell)
   rot3: {
-    3: 'Mercado-B229 (A–Eduardo) / Harwell-B227 (Eian–Z)',
-    6: 'Mercado-B229',
-    9: 'Harwell-B227',
+    3: ['Mercado-B229 (First name A–D)', 'Harwell-B227 (First name E–Z)'],
+    6: ['Mercado-B229'],
+    9: ['Harwell-B227'],
   },
 };
 
@@ -251,7 +251,9 @@ function getThursdayRotations(number) {
       room = THU_MATH_ROOMS[number];
     } else {
       activity = 'STEM Challenge';
-      room = THU_STEM_ROOMS[slot][number] || 'Mercado-B229';
+      const rooms = THU_STEM_ROOMS[slot][number];
+      // If array, join with newline for display
+      room = Array.isArray(rooms) ? rooms.join('\n') : (rooms || 'Mercado-B229');
     }
     return { time: times[i].time, sortMin: times[i].sortMin, activity, room };
   });
@@ -543,7 +545,7 @@ function showStudentSchedule(dayKey, number, studentName) {
     return `<div class="sched-block">
       <div class="sched-time">${displayTime}</div>
       <div class="sched-activity">${b.activity}</div>
-      ${b.room ? `<div class="sched-room">📍 ${b.room}</div>` : ''}
+      ${b.room ? b.room.split("\n").map(r => `<div class="sched-room">📍 ${r}</div>`).join("") : ""}
     </div>`;
   }).join('');
   document.getElementById('student-blocks').className = 'card';
@@ -625,11 +627,35 @@ function getTeacherSchedule(teacherName, dayKey) {
     const roomStr = MON_THU_ROOMS[teacherSubj][teacherTier[0]];
 
     return rotSlots.map((slot, i) => {
-      const groups = MON_THU_ROTS[slot][teacherSubj].filter(n => teacherTier.includes(n));
+      const rots = dayKey === 'thu' ? THU_ROTS : MON_THU_ROTS;
+      const groups = rots[slot][teacherSubj].filter(n => teacherTier.includes(n));
+
+      // For Thursday STEM, determine location and note half-group
+      let location = formatRoom(roomStr);
+      let halfGroupNote = '';
+      if (dayKey === 'thu' && teacherSubj === 'stem') {
+        const splitGroups = { rot1:[2], rot2:[1], rot3:[3] };
+        const split = splitGroups[slot]?.[0];
+        if (groups.includes(split)) {
+          // This teacher has a split group this rotation
+          const rooms = THU_STEM_ROOMS[slot][split];
+          const myRoom = rooms.find(r => r.startsWith(teacherName));
+          if (myRoom) {
+            location = myRoom;
+            halfGroupNote = ' (½ group)';
+          }
+        }
+        // Override location from THU_STEM_ROOMS for full groups too
+        const fullGroup = groups.find(n => n !== split);
+        if (fullGroup && THU_STEM_ROOMS[slot][fullGroup]) {
+          location = THU_STEM_ROOMS[slot][fullGroup][0];
+        }
+      }
+
       return {
         time: times[i].time, sortMin: times[i].sortMin,
-        activity: labelMap[teacherSubj],
-        location: formatRoom(roomStr),
+        activity: labelMap[teacherSubj] + halfGroupNote,
+        location,
         groups,
       };
     });
@@ -810,7 +836,7 @@ function renderTeacherView() {
     html: `<div class="sched-block">
       <div class="sched-time">${b.time}</div>
       <div class="sched-activity">${b.activity}</div>
-      ${b.room ? `<div class="sched-room">📍 ${b.room}</div>` : ''}
+      ${b.room ? b.room.split("\n").map(r => `<div class="sched-room">📍 ${r}</div>`).join("") : ""}
     </div>`
   }));
 
