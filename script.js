@@ -643,17 +643,18 @@ function getTeacherSchedule(teacherName, dayKey) {
       if (dayKey === 'thu' && teacherSubj === 'stem') {
         const { splitGroup, mercadoCutoff, harwellCutoff } = THU_STEM_SPLITS[slot];
         const isMercado = teacherName === 'Mercado';
-        // Check if this rotation's split group falls in our tier
-        if (teacherTier.includes(splitGroup)) {
-          // Add split group to our groups
-          if (!groups.includes(splitGroup)) groups = [...groups, splitGroup].sort((a,b)=>a-b);
+        const isHarwell = teacherName === 'Harwell';
+        // Check if this teacher handles the split group via THU_STEM_ROOMS directly
+        const splitRooms = THU_STEM_ROOMS[slot][splitGroup] || [];
+        const myRoom = splitRooms.find(r => r.startsWith(teacherName + '-'));
+        if (myRoom && (isMercado || isHarwell)) {
+          groups = [...fullGroups, splitGroup].sort((a,b) => a - b);
           splitInfo = { splitGroup, cutoff: isMercado ? mercadoCutoff : harwellCutoff, isAtoX: isMercado };
         }
-        // Set location from THU_STEM_ROOMS
-        const myRooms = THU_STEM_ROOMS[slot];
+        // Set location from THU_STEM_ROOMS for this teacher's full group
         const fullGroup = fullGroups[0];
-        if (fullGroup && myRooms[fullGroup]) {
-          location = myRooms[fullGroup][0];
+        if (fullGroup && THU_STEM_ROOMS[slot][fullGroup]) {
+          location = THU_STEM_ROOMS[slot][fullGroup][0];
         }
       }
 
