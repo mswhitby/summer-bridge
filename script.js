@@ -200,16 +200,61 @@ function getMondayRotations(number) {
   ];
 }
 
+// Thursday STEM room assignments — split groups go to both rooms by first name
+const THU_STEM_ROOMS = {
+  // rot1: groups 2(split), 5(Mercado), 8(Harwell)
+  rot1: {
+    2: 'Mercado-B229 (A–S) / Harwell-B227 (T–Z)',
+    5: 'Mercado-B229',
+    8: 'Harwell-B227',
+  },
+  // rot2: groups 1(split), 4(Mercado), 7(Harwell)
+  rot2: {
+    1: 'Mercado-B229 (A–S) / Harwell-B227 (T–Z)',
+    4: 'Mercado-B229',
+    7: 'Harwell-B227',
+  },
+  // rot3: groups 3(split), 6(Mercado), 9(Harwell)
+  rot3: {
+    3: 'Mercado-B229 (A–S) / Harwell-B227 (T–Z)',
+    6: 'Mercado-B229',
+    9: 'Harwell-B227',
+  },
+};
+
+// Thursday ELAR/Math use same rooms as Monday
+const THU_ELAR_ROOMS = MON_THU_ROOMS.elar;
+const THU_MATH_ROOMS = MON_THU_ROOMS.math;
+
+// Thursday rotation assignments (different from Monday)
+const THU_ROTS = {
+  rot1: { elar:[1,4,7], stem:[2,5,8], math:[3,6,9] },
+  rot2: { elar:[3,6,9], stem:[1,4,7], math:[2,5,8] },
+  rot3: { elar:[2,5,8], stem:[3,6,9], math:[1,4,7] },
+};
+
 function getThursdayRotations(number) {
-  const labels = { elar:'TSIA ELAR', stem:'STEM Challenge', math:'TSIA Math' };
-  const r1 = monThuBlock(number, 'rot1', labels);
-  const r2 = monThuBlock(number, 'rot2', labels);
-  const r3 = monThuBlock(number, 'rot3', labels);
-  return [
-    { time:'8:40 – 9:45',   sortMin:520, activity:r1.activity, room:r1.room },
-    { time:'9:50 – 10:55',  sortMin:590, activity:r2.activity, room:r2.room },
-    { time:'11:00 – 12:05', sortMin:660, activity:r3.activity, room:r3.room },
+  const slots = ['rot1', 'rot2', 'rot3'];
+  const times = [
+    { time:'8:40 – 9:45',   sortMin:520 },
+    { time:'9:50 – 10:55',  sortMin:590 },
+    { time:'11:00 – 12:05', sortMin:660 },
   ];
+
+  return slots.map((slot, i) => {
+    let activity, room;
+    if (THU_ROTS[slot].elar.includes(number)) {
+      activity = 'TSIA ELAR';
+      room = THU_ELAR_ROOMS[number];
+    } else if (THU_ROTS[slot].math.includes(number)) {
+      activity = 'TSIA Math';
+      room = THU_MATH_ROOMS[number];
+    } else {
+      activity = 'STEM Challenge';
+      room = THU_STEM_ROOMS[slot][number] || 'Mercado-B229';
+    }
+    return { time: times[i].time, sortMin: times[i].sortMin, activity, room };
+  });
 }
 
 const MON_STUDENT_BLOCKS = [
@@ -228,17 +273,17 @@ const MON_STUDENT_BLOCKS = [
 ];
 
 const THU_STUDENT_BLOCKS = [
-  { time:'7:30 – 8:30',   sortMin:450, activity:'Arrival & Breakfast',      room:'JECA Commons' },
-  { time:'8:30 – 8:40',   sortMin:510, activity:'Transition to Rotation 1', room:'' },
-  { time:'9:45 – 9:50',   sortMin:585, activity:'Transition to Rotation 2', room:'' },
-  { time:'10:55 – 11:00', sortMin:655, activity:'Transition to Rotation 3', room:'' },
-  { time:'12:05 – 12:15', sortMin:725, activity:'Transition to Lunch',       room:'' },
-  { time:'12:15 – 1:00',  sortMin:735, activity:'Lunch',                    room:'JECA Commons' },
+  { time:'7:30 – 8:30',   sortMin:450, activity:'Arrival & Breakfast',          room:'JECA Commons' },
+  { time:'8:30 – 8:40',   sortMin:510, activity:'Transition to Rotation 1',     room:'' },
+  { time:'9:45 – 9:50',   sortMin:585, activity:'Transition to Rotation 2',     room:'' },
+  { time:'10:55 – 11:00', sortMin:655, activity:'Transition to Rotation 3',     room:'' },
+  { time:'12:05 – 12:15', sortMin:725, activity:'Transition to Lunch',           room:'' },
+  { time:'12:15 – 1:00',  sortMin:735, activity:'Lunch',                        room:'JECA Commons' },
   { time:'1:00 – 1:10',   sortMin:780, activity:'Transition to Pep Rally Prep', room:'' },
-  { time:'1:10 – 1:45',   sortMin:790, activity:'Games / Pep Rally Prep',   room:'' },
-  { time:'2:30 – 2:40',   sortMin:870, activity:'Transition to Pep Rally',  room:'' },
-  { time:'2:30 – 3:30',   sortMin:875, activity:'JISD/NLC Pep Rally',       room:'JECA Commons' },
-  { time:'3:30 – 4:00',   sortMin:930, activity:'Dismissal',                room:'JECA Commons' },
+  { time:'1:10 – 1:45',   sortMin:790, activity:'Pep Rally Prep / Games',       room:'' },
+  { time:'2:30 – 2:40',   sortMin:870, activity:'Transition to Pep Rally',      room:'' },
+  { time:'2:30 – 3:30',   sortMin:875, activity:'JISD/NLC Pep Rally',           room:'JECA Commons' },
+  { time:'3:30 – 4:00',   sortMin:930, activity:'Dismissal',                    room:'JECA Commons' },
 ];
 
 const FRI_STUDENT_BLOCKS = [
