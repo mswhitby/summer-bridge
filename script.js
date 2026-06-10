@@ -106,10 +106,10 @@ const WED_ROOMS = {
                            5:'Garcia-B206', 6:'Garcia-B206', 7:'Garcia-B206', 8:'Garcia-B206' },
   'TSI Math':            { 1:'Kennedy-B209',2:'Kennedy-B209',3:'Kennedy-B209',4:'Kennedy-B209',
                            5:'Tinoco-B221', 6:'Tinoco-B221', 7:'Tinoco-B221', 8:'Tinoco-B221' },
-  'NLC Support Services':{ 1:'Whitby-PLXY',  2:'Harwell-PLXY',
-                           3:'Harwell-PLXY',  4:'Whitby-PLXY',
-                           5:'Mercado-PLXY',  6:'Mercado-PLXY',
-                           7:'Gilmore-PLXY',  8:'Gilmore-PLXY' },
+  'NLC Support Services':{ 1:'Whitby-PLXY 200, 202, 204',  2:'Harwell-PLXY 200, 202, 204',
+                           3:'Harwell-PLXY 200, 202, 204',  4:'Whitby-PLXY 200, 202, 204',
+                           5:'Mercado-PLXY 200, 202, 204',  6:'Mercado-PLXY 200, 202, 204',
+                           7:'Gilmore-PLXY 200, 202, 204',  8:'Gilmore-PLXY 200, 202, 204' },
   'NLC HSP Academics':   { 1:'Whitby-PLXY 100',  2:'Harwell-PLXY 100',
                            3:'Harwell-PLXY 100',  4:'Whitby-PLXY 100',
                            5:'Mercado-PLXY 100',  6:'Mercado-PLXY 100',
@@ -275,12 +275,6 @@ const DAYS = {
     csvFile: 'students_thu.csv',
     getRotations: getThursdayRotations,
   },
-  fri: {
-    label: 'Friday, June 12', short: 'Fri 6/12',
-    type: 'noRotations', numGroups: 0, studentOnly: true,
-    studentBlocks: FRI_STUDENT_BLOCKS,
-    csvFile: null,
-  },
 };
 
 // Date-based active day
@@ -292,7 +286,6 @@ function getActiveDay() {
   if (month === 6 && date === 9)  return 'tue';
   if (month === 6 && date === 10) return 'wed';
   if (month === 6 && date === 11) return 'thu';
-  if (month === 6 && date === 12) return 'fri';
   return 'thu'; // fallback
 }
 
@@ -350,8 +343,8 @@ function initPicker() {
 }
 
 function switchStudentDay(dayKey) {
-  const savedNumber = sessionStorage.getItem('sb_student_number');
-  const savedName   = sessionStorage.getItem('sb_student_name');
+  const savedNumber = localStorage.getItem('sb_student_number');
+  const savedName   = localStorage.getItem('sb_student_name');
 
   // If we have a name, look up their actual group for this day from the roster
   if (savedName) {
@@ -377,7 +370,7 @@ function getSelectedStudentDay() {
     const match = active.getAttribute('onclick').match(/'(\w+)'/);
     if (match) return match[1];
   }
-  return sessionStorage.getItem('sb_student_day') || ACTIVE_DAY;
+  return localStorage.getItem('sb_student_day') || ACTIVE_DAY;
 }
 
 function updateGroupPicker(dayKey) {
@@ -520,19 +513,19 @@ function showStudentSchedule(dayKey, number, studentName) {
     ).join('');
   }
 
-  sessionStorage.setItem('sb_student_number', number);
-  sessionStorage.setItem('sb_student_name', studentName || '');
-  sessionStorage.setItem('sb_student_day', dayKey);
-  sessionStorage.setItem('sb_tab', 'student');
-  sessionStorage.setItem('sb_saved_at', Date.now());
+  localStorage.setItem('sb_student_number', number);
+  localStorage.setItem('sb_student_name', studentName || '');
+  localStorage.setItem('sb_student_day', dayKey);
+  localStorage.setItem('sb_tab', 'student');
+  localStorage.setItem('sb_saved_at', Date.now());
   document.getElementById('student-picker').style.display = 'none';
   document.getElementById('student-sched-view').style.display = '';
 }
 
 function clearStudentSchedule() {
-  sessionStorage.removeItem('sb_student_number');
-  sessionStorage.removeItem('sb_student_name');
-  sessionStorage.removeItem('sb_student_day');
+  localStorage.removeItem('sb_student_number');
+  localStorage.removeItem('sb_student_name');
+  localStorage.removeItem('sb_student_day');
   document.getElementById('student-sched-view').style.display = 'none';
   document.getElementById('student-picker').style.display = '';
   document.getElementById('group-select').value = '';
@@ -628,9 +621,9 @@ function onTeacherSearch() {
 function selectTeacher(name) {
   activeTeacher = name;
   activeTeacherDay = ACTIVE_DAY;
-  sessionStorage.setItem('sb_teacher', name);
-  sessionStorage.setItem('sb_tab', 'teacher');
-  sessionStorage.setItem('sb_saved_at', Date.now());
+  localStorage.setItem('sb_teacher', name);
+  localStorage.setItem('sb_tab', 'teacher');
+  localStorage.setItem('sb_saved_at', Date.now());
   document.getElementById('teacher-search').value = '';
   document.getElementById('teacher-results').innerHTML = '';
   document.getElementById('teacher-search-wrap').style.display = 'none';
@@ -798,7 +791,7 @@ function toggleRoster(id) {
 
 function clearTeacherSchedule() {
   activeTeacher = null;
-  sessionStorage.removeItem('sb_teacher');
+  localStorage.removeItem('sb_teacher');
   document.getElementById('teacher-sched-view').style.display = 'none';
   document.getElementById('teacher-search-wrap').style.display = '';
   document.getElementById('teacher-search').focus();
@@ -812,8 +805,8 @@ function switchTab(tabId) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
   // Only update saved tab if switching to teacher, or no teacher is active
-  if (tabId === 'teacher' || !sessionStorage.getItem('sb_teacher')) {
-    sessionStorage.setItem('sb_tab', tabId);
+  if (tabId === 'teacher' || !localStorage.getItem('sb_teacher')) {
+    localStorage.setItem('sb_tab', tabId);
   }
 }
 
@@ -822,24 +815,28 @@ async function init() {
   await loadAllRosters();
   initPicker();
 
-  const savedAt = Number(sessionStorage.getItem('sb_saved_at') || 0);
+  const savedAt = Number(localStorage.getItem('sb_saved_at') || 0);
   const eightHours = 8 * 60 * 60 * 1000;
   if (Date.now() - savedAt > eightHours) {
-    ['sb_tab','sb_student_number','sb_student_name','sb_student_day','sb_teacher'].forEach(k => sessionStorage.removeItem(k));
+    ['sb_tab','sb_student_number','sb_student_name','sb_student_day','sb_teacher'].forEach(k => localStorage.removeItem(k));
+  } else {
+    // Refresh the timestamp so browsing away and back doesn't trigger expiry
+    localStorage.setItem('sb_saved_at', Date.now());
   }
 
-  const savedTab     = sessionStorage.getItem('sb_tab');
-  const savedNumber  = sessionStorage.getItem('sb_student_number');
-  const savedName    = sessionStorage.getItem('sb_student_name');
-  const savedDay     = sessionStorage.getItem('sb_student_day') || ACTIVE_DAY;
-  const savedTeacher = sessionStorage.getItem('sb_teacher');
+  const savedTab     = localStorage.getItem('sb_tab');
+  const savedNumber  = localStorage.getItem('sb_student_number');
+  const savedName    = localStorage.getItem('sb_student_name');
+  const savedDay     = localStorage.getItem('sb_student_day') || ACTIVE_DAY;
+  const savedTeacher = localStorage.getItem('sb_teacher');
 
   if (savedTab) switchTab(savedTab);
 
   // Restore teacher regardless of current tab — persists until another teacher is selected
   if (savedTeacher) {
     activeTeacher = savedTeacher;
-    if (savedTab === 'teacher') {
+    // Always restore teacher view if we're on teacher tab, or if no student is saved
+    if (savedTab === 'teacher' || !savedNumber) {
       selectTeacher(savedTeacher);
     }
   }
