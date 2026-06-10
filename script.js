@@ -211,7 +211,7 @@ const THU_STEM_ROOMS = {
     8: ['Harwell-B227'],
   },
   rot2: {
-    1: ['Mercado-B229 (First name A–I)', 'Harwell-B227 (First name J–Z)'],
+    1: ['Mercado-B229 (First name: A)', 'Harwell-B227 (First name: not A)'],
     4: ['Mercado-B229'],
     7: ['Harwell-B227'],
   },
@@ -629,7 +629,7 @@ function getTeacherSchedule(teacherName, dayKey) {
     // Thursday STEM split group definitions
     const THU_STEM_SPLITS = {
       rot1: { splitGroup: 2, mercadoCutoff: 'I', harwellCutoff: 'J' },
-      rot2: { splitGroup: 1, mercadoCutoff: 'I', harwellCutoff: 'J' },
+      rot2: { splitGroup: 1, mercadoCutoff: 'A', harwellCutoff: 'A', harwellNotA: true },
       rot3: { splitGroup: 3, mercadoCutoff: 'D', harwellCutoff: 'E' },
     };
 
@@ -649,7 +649,8 @@ function getTeacherSchedule(teacherName, dayKey) {
         const myRoom = splitRooms.find(r => r.startsWith(teacherName + '-'));
         if (myRoom && (isMercado || isHarwell)) {
           groups = [...fullGroups, splitGroup].sort((a,b) => a - b);
-          splitInfo = { splitGroup, cutoff: isMercado ? mercadoCutoff : harwellCutoff, isAtoX: isMercado };
+          const { harwellNotA } = THU_STEM_SPLITS[slot];
+          splitInfo = { splitGroup, cutoff: isMercado ? mercadoCutoff : harwellCutoff, isAtoX: isMercado, harwellNotA: !!harwellNotA };
         }
         // Set location from THU_STEM_ROOMS for this teacher's full group
         const fullGroup = fullGroups[0];
@@ -767,7 +768,13 @@ function renderTeacherView() {
       .filter(s => {
         if (!rot.groups.includes(s.number)) return false;
         if (rot.splitInfo?.splitGroup === s.number) {
-          const firstInitial = s.name.trim()[0].toUpperCase();
+          const firstInitial = s.name.trim().split(' ')[0][0].toUpperCase();
+          if (rot.splitInfo.harwellNotA) {
+            // Mercado = first name starts with A, Harwell = everything else
+            return rot.splitInfo.isAtoX
+              ? firstInitial === 'A'
+              : firstInitial !== 'A';
+          }
           const cutoff = rot.splitInfo.cutoff.toUpperCase();
           return rot.splitInfo.isAtoX
             ? firstInitial <= cutoff
