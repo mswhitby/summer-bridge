@@ -211,7 +211,7 @@ const THU_STEM_ROOMS = {
     8: ['Harwell-B227'],
   },
   rot2: {
-    1: ['Mercado-B229 (First name: A)', 'Harwell-B227 (First name: not A)'],
+    1: ['Mercado-B229 (First name A)', 'Harwell-B227 (First name B–Z)'],
     4: ['Mercado-B229'],
     7: ['Harwell-B227'],
   },
