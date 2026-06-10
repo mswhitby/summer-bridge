@@ -200,23 +200,23 @@ function getMondayRotations(number) {
   ];
 }
 
-// Thursday STEM room assignments — split groups go to both rooms by first name
+// Thursday STEM room assignments — split groups divided by first name for equal distribution
 const THU_STEM_ROOMS = {
-  // rot1: groups 2(split), 5(Mercado), 8(Harwell)
+  // rot1 STEM: groups 2(split), 5(Mercado), 8(Harwell)
   rot1: {
-    2: 'Mercado-B229 (A–S) / Harwell-B227 (T–Z)',
+    2: 'Mercado-B229 (A–Ayden) / Harwell-B227 (Iszella–Z)',
     5: 'Mercado-B229',
     8: 'Harwell-B227',
   },
-  // rot2: groups 1(split), 4(Mercado), 7(Harwell)
+  // rot2 STEM: groups 1(split), 4(Mercado), 7(Harwell)
   rot2: {
-    1: 'Mercado-B229 (A–S) / Harwell-B227 (T–Z)',
+    1: 'Mercado-B229 (A–Amariah) / Harwell-B227 (Aubree–Z)',
     4: 'Mercado-B229',
     7: 'Harwell-B227',
   },
-  // rot3: groups 3(split), 6(Mercado), 9(Harwell)
+  // rot3 STEM: groups 3(split), 6(Mercado), 9(Harwell)
   rot3: {
-    3: 'Mercado-B229 (A–S) / Harwell-B227 (T–Z)',
+    3: 'Mercado-B229 (A–Eduardo) / Harwell-B227 (Eian–Z)',
     6: 'Mercado-B229',
     9: 'Harwell-B227',
   },
