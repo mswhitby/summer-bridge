@@ -48,10 +48,10 @@ const TUE_ROOMS = {
                           3:'Harwell-PLXY Bluebonnet',  4:'Whitby-PLXY Bluebonnet',
                           5:'Mercado-PLXY Bluebonnet',  6:'Mercado-PLXY Bluebonnet',
                           7:'Gilmore-PLXY Bluebonnet',  8:'Gilmore-PLXY Bluebonnet' },
-  'NLC HSP Orientation':{ 1:'Whitby-PLXY 100',  2:'Harwell-PLXY 100',
-                          3:'Harwell-PLXY 100',  4:'Whitby-PLXY 100',
-                          5:'Mercado-PLXY 100',  6:'Mercado-PLXY 100',
-                          7:'Gilmore-PLXY 100',  8:'Gilmore-PLXY 100' },
+  'NLC HSP Orientation':{ 1:'Whitby-PLXY Bluebonnet',  2:'Harwell-PLXY Bluebonnet',
+                          3:'Harwell-PLXY Bluebonnet',  4:'Whitby-PLXY Bluebonnet',
+                          5:'Mercado-PLXY Bluebonnet',  6:'Mercado-PLXY Bluebonnet',
+                          7:'Gilmore-PLXY Bluebonnet',  8:'Gilmore-PLXY Bluebonnet' },
 };
 
 const TUE_ROT_TIMES = [
@@ -110,10 +110,10 @@ const WED_ROOMS = {
                            3:'Harwell-PLXY 200, 202, 204',  4:'Whitby-PLXY 200, 202, 204',
                            5:'Mercado-PLXY 200, 202, 204',  6:'Mercado-PLXY 200, 202, 204',
                            7:'Gilmore-PLXY 200, 202, 204',  8:'Gilmore-PLXY 200, 202, 204' },
-  'NLC HSP Academics':   { 1:'Whitby-PLXY 100',  2:'Harwell-PLXY 100',
-                           3:'Harwell-PLXY 100',  4:'Whitby-PLXY 100',
-                           5:'Mercado-PLXY 100',  6:'Mercado-PLXY 100',
-                           7:'Gilmore-PLXY 100',  8:'Gilmore-PLXY 100' },
+  'NLC HSP Academics':   { 1:'Whitby-PLXY Bluebonnet',  2:'Harwell-PLXY Bluebonnet',
+                           3:'Harwell-PLXY Bluebonnet',  4:'Whitby-PLXY Bluebonnet',
+                           5:'Mercado-PLXY Bluebonnet',  6:'Mercado-PLXY Bluebonnet',
+                           7:'Gilmore-PLXY Bluebonnet',  8:'Gilmore-PLXY Bluebonnet' },
 };
 
 const WED_ROT_TIMES = [
