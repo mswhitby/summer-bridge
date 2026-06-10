@@ -626,37 +626,43 @@ function getTeacherSchedule(teacherName, dayKey) {
     const labelMap = { elar:'TSIA ELAR', stem:'STEM Challenge', math:'TSIA Math' };
     const roomStr = MON_THU_ROOMS[teacherSubj][teacherTier[0]];
 
+    // Thursday STEM split group definitions
+    const THU_STEM_SPLITS = {
+      rot1: { splitGroup: 2, mercadoCutoff: 'I', harwellCutoff: 'J' },
+      rot2: { splitGroup: 1, mercadoCutoff: 'I', harwellCutoff: 'J' },
+      rot3: { splitGroup: 3, mercadoCutoff: 'D', harwellCutoff: 'E' },
+    };
+
     return rotSlots.map((slot, i) => {
       const rots = dayKey === 'thu' ? THU_ROTS : MON_THU_ROTS;
-      const groups = rots[slot][teacherSubj].filter(n => teacherTier.includes(n));
-
-      // For Thursday STEM, determine location and note half-group
+      const fullGroups = rots[slot][teacherSubj].filter(n => teacherTier.includes(n));
       let location = formatRoom(roomStr);
-      let halfGroupNote = '';
+      let groups = fullGroups;
+      let splitInfo = null; // { splitGroup, isAtoX: bool }
+
       if (dayKey === 'thu' && teacherSubj === 'stem') {
-        const splitGroups = { rot1:[2], rot2:[1], rot3:[3] };
-        const split = splitGroups[slot]?.[0];
-        if (groups.includes(split)) {
-          // This teacher has a split group this rotation
-          const rooms = THU_STEM_ROOMS[slot][split];
-          const myRoom = rooms.find(r => r.startsWith(teacherName));
-          if (myRoom) {
-            location = myRoom;
-            halfGroupNote = ' (½ group)';
-          }
+        const { splitGroup, mercadoCutoff, harwellCutoff } = THU_STEM_SPLITS[slot];
+        const isMercado = teacherName === 'Mercado';
+        // Check if this rotation's split group falls in our tier
+        if (teacherTier.includes(splitGroup)) {
+          // Add split group to our groups
+          if (!groups.includes(splitGroup)) groups = [...groups, splitGroup].sort((a,b)=>a-b);
+          splitInfo = { splitGroup, cutoff: isMercado ? mercadoCutoff : harwellCutoff, isAtoX: isMercado };
         }
-        // Override location from THU_STEM_ROOMS for full groups too
-        const fullGroup = groups.find(n => n !== split);
-        if (fullGroup && THU_STEM_ROOMS[slot][fullGroup]) {
-          location = THU_STEM_ROOMS[slot][fullGroup][0];
+        // Set location from THU_STEM_ROOMS
+        const myRooms = THU_STEM_ROOMS[slot];
+        const fullGroup = fullGroups[0];
+        if (fullGroup && myRooms[fullGroup]) {
+          location = myRooms[fullGroup][0];
         }
       }
 
       return {
         time: times[i].time, sortMin: times[i].sortMin,
-        activity: labelMap[teacherSubj] + halfGroupNote,
+        activity: labelMap[teacherSubj],
         location,
         groups,
+        splitInfo,
       };
     });
   }
@@ -743,15 +749,33 @@ function renderTeacherView() {
 
   const rotationRows = rotations.map((rot, i) => {
     const rotId = `rot-${i}`;
+
+    // Build group pills — split group gets a separate pill with name range note
     const groupPills = rot.groups.map(n => {
       const color = GROUP_COLOR[n] || '';
       const c = COLOR[color] || { bg:'var(--color-surface)', text:'var(--color-text)', border:'var(--color-border-strong)' };
-      return `<span class="group-pill" style="background:${c.bg};color:${c.text};border:1px solid ${c.border};margin-right:4px">Group ${n}</span>`;
+      const isSplit = rot.splitInfo?.splitGroup === n;
+      const label = isSplit
+        ? `Group ${n} (First name ${rot.splitInfo.isAtoX ? 'A' : rot.splitInfo.cutoff}–${rot.splitInfo.isAtoX ? rot.splitInfo.cutoff : 'Z'})`
+        : `Group ${n}`;
+      return `<span class="group-pill" style="background:${c.bg};color:${c.text};border:1px solid ${c.border};margin-right:4px">${label}</span>`;
     }).join('');
 
+    // Roster — filter split group by first name initial
     const incomingStudents = students
-      .filter(s => rot.groups.includes(s.number))
+      .filter(s => {
+        if (!rot.groups.includes(s.number)) return false;
+        if (rot.splitInfo?.splitGroup === s.number) {
+          const firstInitial = s.name.trim()[0].toUpperCase();
+          const cutoff = rot.splitInfo.cutoff.toUpperCase();
+          return rot.splitInfo.isAtoX
+            ? firstInitial <= cutoff
+            : firstInitial >= cutoff;
+        }
+        return true;
+      })
       .sort((a, b) => a.name.localeCompare(b.name));
+
     const count = incomingStudents.length;
     const rosterRows = count
       ? incomingStudents.map(s => `<div class="student-chip"><div class="chip-name">${s.name}</div></div>`).join('')
