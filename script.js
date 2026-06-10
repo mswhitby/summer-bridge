@@ -757,9 +757,16 @@ function renderTeacherView() {
       const color = GROUP_COLOR[n] || '';
       const c = COLOR[color] || { bg:'var(--color-surface)', text:'var(--color-text)', border:'var(--color-border-strong)' };
       const isSplit = rot.splitInfo?.splitGroup === n;
-      const label = isSplit
-        ? `Group ${n} (First name ${rot.splitInfo.isAtoX ? 'A' : rot.splitInfo.cutoff}–${rot.splitInfo.isAtoX ? rot.splitInfo.cutoff : 'Z'})`
-        : `Group ${n}`;
+      let label = `Group ${n}`;
+      if (isSplit) {
+        // Extract the label from the room string e.g. "Mercado-B229 (First name A–I)"
+        const rooms = THU_STEM_ROOMS[Object.keys(THU_STEM_ROOMS).find(slot =>
+          THU_STEM_ROOMS[slot][n]
+        )]?.[n] || [];
+        const myRoom = rooms.find(r => r.startsWith(rot.location?.split('-')[0]));
+        const match = myRoom?.match(/\((.+)\)/);
+        if (match) label = `Group ${n} (${match[1]})`;
+      }
       return `<span class="group-pill" style="background:${c.bg};color:${c.text};border:1px solid ${c.border};margin-right:4px">${label}</span>`;
     }).join('');
 
