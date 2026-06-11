@@ -552,6 +552,9 @@ function showStudentSchedule(dayKey, number, studentName) {
   document.getElementById('student-blocks').className = 'card';
   } // end else (not group 9 on Tue/Wed)
 
+  // Highlight active block after render
+  setTimeout(highlightActiveBlock, 0);
+
   // Render day tabs in schedule view
   const tabsEl = document.getElementById('student-day-tabs');
   if (tabsEl) {
@@ -885,6 +888,7 @@ function renderTeacherView() {
     .map(r => r.html).join('');
 
   document.getElementById('teacher-blocks').innerHTML = notice + `<div class="card">${allRows}</div>`;
+  setTimeout(highlightActiveBlock, 0);
 }
 
 function switchTeacherDay(dayKey) {
