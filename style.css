@@ -295,3 +295,28 @@ select {
   cursor: pointer;
 }
 select:focus { border-color: var(--blue-border); }
+
+/* ─── Active block highlight ─────────────────────────────────────────────── */
+.sched-block.active-block {
+  background: var(--blue-bg);
+  border-radius: var(--radius-md);
+  margin: -2px -8px;
+  padding: 12px 8px;
+}
+.sched-block.active-block .sched-time {
+  color: var(--blue-text);
+  font-weight: 600;
+}
+.sched-block.active-block .sched-activity {
+  color: var(--blue-text);
+}
+
+.sched-block.next-block {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  margin: -2px -8px;
+  padding: 12px 8px;
+}
+.sched-block.next-block .sched-time {
+  font-weight: 600;
+}

@@ -542,7 +542,8 @@ function showStudentSchedule(dayKey, number, studentName) {
 
   document.getElementById('student-blocks').innerHTML = merged.map(b => {
     const displayTime = b.activity === 'Dismissal' ? b.time.split('–')[0].trim() : b.time;
-    return `<div class="sched-block">
+    const [startMin, endMin] = parseTimeRange(b.time);
+    return `<div class="sched-block" data-start="${startMin}" data-end="${endMin}">
       <div class="sched-time">${displayTime}</div>
       <div class="sched-activity">${b.activity}</div>
       ${b.room ? b.room.split("\n").map(r => `<div class="sched-room">📍 ${r}</div>`).join("") : ""}
@@ -800,7 +801,7 @@ function renderTeacherView() {
 
     return {
       sortMin: rot.sortMin,
-      html: `<div class="sched-block">
+      html: `<div class="sched-block" data-start="${parseTimeRange(rot.time)[0]}" data-end="${parseTimeRange(rot.time)[1]}">
         <div class="sched-time">${rot.time}</div>
         <div class="sched-activity">${rot.activity || '—'}</div>
         <div style="margin-top:4px">${groupPills}</div>
@@ -872,7 +873,7 @@ function renderTeacherView() {
 
   const fullGroupRows = mergeBlocks(fullBlocks.filter(b => !b.activity.startsWith('Transition'))).map(b => ({
     sortMin: b.sortMin,
-    html: `<div class="sched-block">
+    html: `<div class="sched-block" data-start="${parseTimeRange(b.time)[0]}" data-end="${parseTimeRange(b.time)[1]}">
       <div class="sched-time">${b.time}</div>
       <div class="sched-activity">${b.activity}</div>
       ${b.room ? b.room.split("\n").map(r => `<div class="sched-room">📍 ${r}</div>`).join("") : ""}
@@ -920,10 +921,74 @@ function switchTab(tabId) {
   }
 }
 
+// ─── Active block highlighting ────────────────────────────────────────────────
+// Parse a time range string like "8:40 – 9:45" into [startMin, endMin]
+function parseTimeRange(timeStr) {
+  const parts = timeStr.split('–').map(s => s.trim());
+  const toMin = t => {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + (m || 0);
+  };
+  const start = toMin(parts[0]);
+  const end = parts[1] ? toMin(parts[1]) : start + 60;
+  // Handle PM times — anything before 7am must be PM (e.g. 1:00 = 13:00)
+  const adjustedStart = start < 7 * 60 ? start + 12 * 60 : start;
+  const adjustedEnd = end < 7 * 60 ? end + 12 * 60 : end;
+  return [adjustedStart, adjustedEnd];
+}
+
+function highlightActiveBlock() {
+  const now = new Date();
+  const dayKeys = ['sun','mon','tue','wed','thu','fri','sat'];
+  const todayKey = dayKeys[now.getDay()];
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const inProgramHours = nowMin >= 7 * 60 + 30 && nowMin <= 16 * 60 + 30;
+
+  // Only highlight if today matches a program day
+  if (!DAYS[todayKey]) return;
+
+  // Check both student and teacher block containers
+  const containers = [
+    document.getElementById('student-blocks'),
+    document.getElementById('teacher-blocks'),
+  ].filter(Boolean);
+
+  containers.forEach(container => {
+    const blocks = container.querySelectorAll('.sched-block[data-start]');
+    if (!blocks.length) return;
+
+    // Remove existing highlights
+    blocks.forEach(b => b.classList.remove('active-block', 'next-block'));
+
+    if (!inProgramHours) return;
+
+    // Find current or next block
+    let activeFound = false;
+    let nextBlock = null;
+
+    blocks.forEach(b => {
+      const start = Number(b.dataset.start);
+      const end = Number(b.dataset.end);
+      if (nowMin >= start && nowMin < end) {
+        b.classList.add('active-block');
+        activeFound = true;
+      } else if (!activeFound && !nextBlock && nowMin < start) {
+        nextBlock = b;
+      }
+    });
+
+    if (!activeFound && nextBlock) {
+      nextBlock.classList.add('next-block');
+    }
+  });
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
   await loadAllRosters();
   initPicker();
+  highlightActiveBlock();
+  setInterval(highlightActiveBlock, 60 * 1000); // every minute
 
   const savedAt = Number(localStorage.getItem('sb_saved_at') || 0);
   const eightHours = 8 * 60 * 60 * 1000;
