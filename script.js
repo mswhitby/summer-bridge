@@ -943,48 +943,48 @@ function parseTimeRange(timeStr) {
 
 function highlightActiveBlock() {
   const dayKeys = ['sun','mon','tue','wed','thu','fri','sat'];
-
-  // Get current time in CST (UTC-6, no DST adjustment needed for June in Texas)
   const now = new Date();
   const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const cst = new Date(utc - 5 * 3600000); // CDT (UTC-5) — Texas in June;
-  const todayKey = dayKeys[cst.getDay()];
-  const nowMin = cst.getHours() * 60 + cst.getMinutes();
-
-  // Only highlight if today is a program day and within program hours
-  if (!DAYS[todayKey] || DAYS[todayKey].studentOnly) return;
+  const cdt = new Date(utc - 5 * 3600000); // CDT (UTC-5) — Texas in June
+  const todayKey = dayKeys[cdt.getDay()];
+  const nowMin = cdt.getHours() * 60 + cdt.getMinutes();
   const inProgramHours = nowMin >= 7 * 60 + 30 && nowMin <= 16 * 60 + 30;
 
-  const containers = [
-    document.getElementById('student-blocks'),
-    document.getElementById('teacher-blocks'),
-  ].filter(el => el && el.querySelector('.sched-block[data-start]'));
+  if (!DAYS[todayKey] || DAYS[todayKey].studentOnly) return;
 
-  containers.forEach(container => {
-    const blocks = Array.from(container.querySelectorAll('.sched-block[data-start]'));
-    blocks.forEach(b => b.classList.remove('active-block', 'next-block'));
+  // Student — only highlight if the tab shown matches today
+  const studentBlocks = document.getElementById('student-blocks');
+  if (studentBlocks?.querySelector('.sched-block[data-start]')) {
+    const shownDay = localStorage.getItem('sb_student_day') || ACTIVE_DAY;
+    applyHighlight(studentBlocks, shownDay === todayKey && inProgramHours, nowMin);
+  }
 
-    if (!inProgramHours) return;
+  // Teacher — only highlight if the teacher day tab matches today
+  const teacherBlocks = document.getElementById('teacher-blocks');
+  if (teacherBlocks?.querySelector('.sched-block[data-start]')) {
+    applyHighlight(teacherBlocks, activeTeacherDay === todayKey && inProgramHours, nowMin);
+  }
+}
 
-    let activeFound = false;
-    let nextBlock = null;
+function applyHighlight(container, shouldHighlight, nowMin) {
+  const blocks = Array.from(container.querySelectorAll('.sched-block[data-start]'));
+  blocks.forEach(b => b.classList.remove('active-block', 'next-block'));
+  if (!shouldHighlight) return;
 
-    for (const b of blocks) {
-      const start = Number(b.dataset.start);
-      const end = Number(b.dataset.end);
-      if (nowMin >= start && nowMin < end) {
-        b.classList.add('active-block');
-        activeFound = true;
-        break;
-      } else if (!activeFound && nowMin < start) {
-        nextBlock = nextBlock || b;
-      }
+  let activeFound = false;
+  let nextBlock = null;
+  for (const b of blocks) {
+    const start = Number(b.dataset.start);
+    const end = Number(b.dataset.end);
+    if (nowMin >= start && nowMin < end) {
+      b.classList.add('active-block');
+      activeFound = true;
+      break;
+    } else if (!activeFound && nowMin < start) {
+      nextBlock = nextBlock || b;
     }
-
-    if (!activeFound && nextBlock) {
-      nextBlock.classList.add('next-block');
-    }
-  });
+  }
+  if (!activeFound && nextBlock) nextBlock.classList.add('next-block');
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
