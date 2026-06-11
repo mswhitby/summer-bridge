@@ -922,60 +922,60 @@ function switchTab(tabId) {
 }
 
 // ─── Active block highlighting ────────────────────────────────────────────────
-// Parse a time range string like "8:40 – 9:45" into [startMin, endMin]
+// Parse "8:40 – 9:45" into [startMin, endMin] using program context for AM/PM
+// All program times are between 7:30am and 4:00pm
 function parseTimeRange(timeStr) {
-  const parts = timeStr.split('–').map(s => s.trim());
   const toMin = t => {
-    const [h, m] = t.split(':').map(Number);
-    return h * 60 + (m || 0);
+    const [h, m] = t.trim().split(':').map(Number);
+    // Program runs 7:30am–4:00pm. Anything 1–6 must be PM (13:00–18:00)
+    const hour = (h >= 1 && h <= 6) ? h + 12 : h;
+    return hour * 60 + (m || 0);
   };
+  const parts = timeStr.split('–');
   const start = toMin(parts[0]);
-  const end = parts[1] ? toMin(parts[1]) : start + 60;
-  // Handle PM times — anything before 7am must be PM (e.g. 1:00 = 13:00)
-  const adjustedStart = start < 7 * 60 ? start + 12 * 60 : start;
-  const adjustedEnd = end < 7 * 60 ? end + 12 * 60 : end;
-  return [adjustedStart, adjustedEnd];
+  const end = parts[1] ? toMin(parts[1]) : start + 65;
+  return [start, end];
 }
 
 function highlightActiveBlock() {
-  const now = new Date();
   const dayKeys = ['sun','mon','tue','wed','thu','fri','sat'];
-  const todayKey = dayKeys[now.getDay()];
-  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  // Get current time in CST (UTC-6, no DST adjustment needed for June in Texas)
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const cst = new Date(utc - 5 * 3600000); // CDT (UTC-5) — Texas in June;
+  const todayKey = dayKeys[cst.getDay()];
+  const nowMin = cst.getHours() * 60 + cst.getMinutes();
+
+  // Only highlight if today is a program day and within program hours
+  if (!DAYS[todayKey] || DAYS[todayKey].studentOnly) return;
   const inProgramHours = nowMin >= 7 * 60 + 30 && nowMin <= 16 * 60 + 30;
 
-  // Only highlight if today matches a program day
-  if (!DAYS[todayKey]) return;
-
-  // Check both student and teacher block containers
   const containers = [
     document.getElementById('student-blocks'),
     document.getElementById('teacher-blocks'),
-  ].filter(Boolean);
+  ].filter(el => el && el.querySelector('.sched-block[data-start]'));
 
   containers.forEach(container => {
-    const blocks = container.querySelectorAll('.sched-block[data-start]');
-    if (!blocks.length) return;
-
-    // Remove existing highlights
+    const blocks = Array.from(container.querySelectorAll('.sched-block[data-start]'));
     blocks.forEach(b => b.classList.remove('active-block', 'next-block'));
 
     if (!inProgramHours) return;
 
-    // Find current or next block
     let activeFound = false;
     let nextBlock = null;
 
-    blocks.forEach(b => {
+    for (const b of blocks) {
       const start = Number(b.dataset.start);
       const end = Number(b.dataset.end);
       if (nowMin >= start && nowMin < end) {
         b.classList.add('active-block');
         activeFound = true;
-      } else if (!activeFound && !nextBlock && nowMin < start) {
-        nextBlock = b;
+        break;
+      } else if (!activeFound && nowMin < start) {
+        nextBlock = nextBlock || b;
       }
-    });
+    }
 
     if (!activeFound && nextBlock) {
       nextBlock.classList.add('next-block');
