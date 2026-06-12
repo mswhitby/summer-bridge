@@ -302,13 +302,13 @@ const DAYS = {
   },
   tue: {
     label: 'Tuesday, June 9', short: 'Tue 6/9',
-    type: 'color', studentOnly: false,
+    type: 'color', numGroups: 8, studentOnly: false,
     rotations: TUE_ROTATIONS, rooms: TUE_ROOMS, rotTimes: TUE_ROT_TIMES,
     studentBlocks: TUE_STUDENT_BLOCKS, teacherBlocks: TUE_TEACHER_BLOCKS,
   },
   wed: {
     label: 'Wednesday, June 10', short: 'Wed 6/10',
-    type: 'color', studentOnly: false,
+    type: 'color', numGroups: 8, studentOnly: false,
     rotations: WED_ROTATIONS, rooms: WED_ROOMS, rotTimes: WED_ROT_TIMES,
     studentBlocks: WED_STUDENT_BLOCKS,
   },
