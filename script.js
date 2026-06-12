@@ -48,10 +48,10 @@ const TUE_ROOMS = {
                           3:'Harwell-PLXY Bluebonnet',  4:'Whitby-PLXY Bluebonnet',
                           5:'Mercado-PLXY Bluebonnet',  6:'Mercado-PLXY Bluebonnet',
                           7:'Gilmore-PLXY Bluebonnet',  8:'Gilmore-PLXY Bluebonnet' },
-  'NLC HSP Orientation':{ 1:'Whitby-PLXY Bluebonnet',  2:'Harwell-PLXY Bluebonnet',
-                          3:'Harwell-PLXY Bluebonnet',  4:'Whitby-PLXY Bluebonnet',
-                          5:'Mercado-PLXY Bluebonnet',  6:'Mercado-PLXY Bluebonnet',
-                          7:'Gilmore-PLXY Bluebonnet',  8:'Gilmore-PLXY Bluebonnet' },
+  'NLC HSP Orientation':{ 1:'Whitby-PLXY 100',  2:'Harwell-PLXY 100',
+                          3:'Harwell-PLXY 100',  4:'Whitby-PLXY 100',
+                          5:'Mercado-PLXY 100',  6:'Mercado-PLXY 100',
+                          7:'Gilmore-PLXY 100',  8:'Gilmore-PLXY 100' },
 };
 
 const TUE_ROT_TIMES = [
