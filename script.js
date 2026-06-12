@@ -298,7 +298,6 @@ const DAYS = {
     label: 'Monday, June 8', short: 'Mon 6/8',
     type: 'monThu', numGroups: 9, studentOnly: false,
     studentBlocks: MON_STUDENT_BLOCKS,
-    csvFile: 'students_mon.csv',
     getRotations: getMondayRotations,
   },
   tue: {
@@ -306,106 +305,43 @@ const DAYS = {
     type: 'color', studentOnly: false,
     rotations: TUE_ROTATIONS, rooms: TUE_ROOMS, rotTimes: TUE_ROT_TIMES,
     studentBlocks: TUE_STUDENT_BLOCKS, teacherBlocks: TUE_TEACHER_BLOCKS,
-    csvFile: 'students_tue.csv', numGroups: 8,
   },
   wed: {
     label: 'Wednesday, June 10', short: 'Wed 6/10',
     type: 'color', studentOnly: false,
     rotations: WED_ROTATIONS, rooms: WED_ROOMS, rotTimes: WED_ROT_TIMES,
     studentBlocks: WED_STUDENT_BLOCKS,
-    csvFile: 'students_wed.csv', numGroups: 8,
   },
   thu: {
     label: 'Thursday, June 11', short: 'Thu 6/11',
     type: 'monThu', numGroups: 9, studentOnly: false,
     studentBlocks: THU_STUDENT_BLOCKS,
-    csvFile: 'students_thu.csv',
     getRotations: getThursdayRotations,
   },
 };
 
 // Date-based active day
 function getActiveDay() {
-  const now = new Date();
-  const month = now.getMonth() + 1;
-  const date = now.getDate();
-  if (month === 6 && date === 8)  return 'mon';
-  if (month === 6 && date === 9)  return 'tue';
-  if (month === 6 && date === 10) return 'wed';
-  if (month === 6 && date === 11) return 'thu';
-  return 'thu'; // fallback
+  // Demo mode: fixed to June 11 so active highlights and date default work after program ends
+  return 'thu';
 }
 
 const ACTIVE_DAY = getActiveDay();
 
 // ─── State ────────────────────────────────────────────────────────────────────
-let rostersByDay = {};
 let activeTeacher = null;
 let activeStudentDay = ACTIVE_DAY;
 let activeTeacherDay = ACTIVE_DAY;
 
-// ─── CSV loading ──────────────────────────────────────────────────────────────
-async function loadAllRosters() {
-  const bust = '?v=' + Date.now();
-  let master = [];
-  try {
-    const res = await fetch('students_master.csv' + bust);
-    if (res.ok) master = parseCSV(await res.text());
-  } catch (_) {}
-
-  for (const [dayKey, day] of Object.entries(DAYS)) {
-    if (!day.csvFile) { rostersByDay[dayKey] = master; continue; }
-    let overrides = [];
-    try {
-      const res = await fetch(day.csvFile + bust);
-      if (res.ok) overrides = parseCSV(await res.text());
-    } catch (_) {}
-
-    if (overrides.length) {
-      const overrideMap = new Map(overrides.map(s => [s.name, s]));
-      rostersByDay[dayKey] = master.map(s => overrideMap.has(s.name) ? overrideMap.get(s.name) : s);
-      for (const s of overrides) {
-        if (!master.find(m => m.name === s.name)) rostersByDay[dayKey].push(s);
-      }
-    } else {
-      rostersByDay[dayKey] = master;
-    }
-  }
-}
-
-function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-  return lines.slice(1).filter(l => l.trim()).map(line => {
-    const vals = line.split(',').map(v => v.trim());
-    const obj = {};
-    headers.forEach((h, i) => obj[h] = vals[i] || '');
-    return { name: obj.name, color: obj.color, number: Number(obj.number) };
-  });
-}
-
-// ─── Student picker + search ──────────────────────────────────────────────────
+// ─── Student picker ───────────────────────────────────────────────────────────
 function initPicker() {
   updateGroupPicker(ACTIVE_DAY);
 }
 
 function switchStudentDay(dayKey) {
   const savedNumber = localStorage.getItem('sb_student_number');
-  const savedName   = localStorage.getItem('sb_student_name');
-
-  // If we have a name, look up their actual group for this day from the roster
-  if (savedName) {
-    const students = rostersByDay[dayKey] || [];
-    const s = students.find(s => s.name === savedName);
-    if (s) {
-      showStudentSchedule(dayKey, s.number, s.name);
-      return;
-    }
-  }
-
-  // Fall back to saved number if no name match
   if (savedNumber) {
-    showStudentSchedule(dayKey, Number(savedNumber), savedName || undefined);
+    showStudentSchedule(dayKey, Number(savedNumber));
   } else {
     showStudentSchedule(dayKey, null);
   }
@@ -447,50 +383,13 @@ function updateGroupPicker(dayKey) {
   };
 }
 
-function onStudentSearch() {
-  const q = document.getElementById('student-search').value.trim().toLowerCase();
-  const out = document.getElementById('student-search-results');
-  if (!q) { out.innerHTML = ''; return; }
-
-  const dayKey = getSelectedStudentDay();
-  const students = rostersByDay[dayKey] || [];
-  const matches = students.filter(s => s.name.toLowerCase().includes(q));
-
-  if (!matches.length) {
-    out.innerHTML = `<div class="empty-msg">No students found for "${q}"</div>`;
-    return;
-  }
-
-  const seen = new Set();
-  const unique = [];
-  for (const s of matches) {
-    if (!seen.has(s.name)) { seen.add(s.name); unique.push(s); }
-  }
-  unique.sort((a, b) => a.name.localeCompare(b.name));
-
-  out.innerHTML = unique.map(s =>
-    `<div class="result-row" onclick="selectStudentByName('${s.name.replace(/'/g,"\\'")}')">
-      <div class="result-name">${s.name}</div>
-    </div>`).join('');
-}
-
-function selectStudentByName(name) {
-  const dayKey = getSelectedStudentDay();
-  const students = rostersByDay[dayKey] || [];
-  const s = students.find(s => s.name === name);
-  if (!s) return;
-  document.getElementById('student-search').value = '';
-  document.getElementById('student-search-results').innerHTML = '';
-  showStudentSchedule(dayKey, s.number, s.name);
-}
-
-function showStudentSchedule(dayKey, number, studentName) {
+function showStudentSchedule(dayKey, number) {
   activeStudentDay = dayKey;
   const day = DAYS[dayKey];
   const color = GROUP_COLOR[number] || '';
   const c = COLOR[color] || { bg:'var(--color-surface)', text:'var(--color-text)', border:'var(--color-border-strong)' };
 
-  const nameDisplay = studentName || `Group ${number}`;
+  const nameDisplay = `Group ${number}`;
   document.getElementById('student-badge').innerHTML = number ? `
     <div class="student-badge" style="margin-bottom:1rem">
       <div class="badge-circle" style="background:${c.bg};color:${c.text};border-color:${c.border}">${number}</div>
@@ -565,7 +464,6 @@ function showStudentSchedule(dayKey, number, studentName) {
   }
 
   localStorage.setItem('sb_student_number', number);
-  localStorage.setItem('sb_student_name', studentName || '');
   localStorage.setItem('sb_student_day', dayKey);
   localStorage.setItem('sb_tab', 'student');
   localStorage.setItem('sb_saved_at', Date.now());
@@ -575,7 +473,6 @@ function showStudentSchedule(dayKey, number, studentName) {
 
 function clearStudentSchedule() {
   localStorage.removeItem('sb_student_number');
-  localStorage.removeItem('sb_student_name');
   localStorage.removeItem('sb_student_day');
   document.getElementById('student-sched-view').style.display = 'none';
   document.getElementById('student-picker').style.display = '';
@@ -751,19 +648,13 @@ function renderTeacherView() {
   }
 
   const rotations = getTeacherSchedule(name, dayKey);
-  const students = rostersByDay[dayKey] || [];
-
   const rotationRows = rotations.map((rot, i) => {
-    const rotId = `rot-${i}`;
-
-    // Build group pills — split group gets a separate pill with name range note
     const groupPills = rot.groups.map(n => {
       const color = GROUP_COLOR[n] || '';
       const c = COLOR[color] || { bg:'var(--color-surface)', text:'var(--color-text)', border:'var(--color-border-strong)' };
       const isSplit = rot.splitInfo?.splitGroup === n;
       let label = `Group ${n}`;
       if (isSplit) {
-        // Extract the label from the room string e.g. "Mercado-B229 (First name A–I)"
         const rooms = THU_STEM_ROOMS[Object.keys(THU_STEM_ROOMS).find(slot =>
           THU_STEM_ROOMS[slot][n]
         )]?.[n] || [];
@@ -774,32 +665,6 @@ function renderTeacherView() {
       return `<span class="group-pill" style="background:${c.bg};color:${c.text};border:1px solid ${c.border};margin-right:4px">${label}</span>`;
     }).join('');
 
-    // Roster — filter split group by first name initial
-    const incomingStudents = students
-      .filter(s => {
-        if (!rot.groups.includes(s.number)) return false;
-        if (rot.splitInfo?.splitGroup === s.number) {
-          const firstInitial = s.name.trim().split(' ')[0][0].toUpperCase();
-          if (rot.splitInfo.harwellNotA) {
-            // Mercado = first name starts with A, Harwell = everything else
-            return rot.splitInfo.isAtoX
-              ? firstInitial === 'A'
-              : firstInitial !== 'A';
-          }
-          const cutoff = rot.splitInfo.cutoff.toUpperCase();
-          return rot.splitInfo.isAtoX
-            ? firstInitial <= cutoff
-            : firstInitial >= cutoff;
-        }
-        return true;
-      })
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    const count = incomingStudents.length;
-    const rosterRows = count
-      ? incomingStudents.map(s => `<div class="student-chip"><div class="chip-name">${s.name}</div></div>`).join('')
-      : '<div class="no-students">No roster loaded</div>';
-
     const locationHtml = rot.location ? `<div class="sched-room">📍 ${rot.location}</div>` : '';
 
     return {
@@ -809,11 +674,6 @@ function renderTeacherView() {
         <div class="sched-activity">${rot.activity || '—'}</div>
         <div style="margin-top:4px">${groupPills}</div>
         ${locationHtml}
-        <div class="roster-toggle-row" onclick="toggleRoster('${rotId}')" style="cursor:pointer;margin-top:6px;display:flex;align-items:center;gap:6px">
-          <span class="roster-count">${count} student${count !== 1 ? 's' : ''}</span>
-          <span class="toggle-arrow" id="${rotId}-arrow">▸</span>
-        </div>
-        <div class="rot-roster" id="${rotId}" style="display:none;margin-top:4px">${rosterRows}</div>
       </div>`
     };
   });
@@ -896,13 +756,6 @@ function switchTeacherDay(dayKey) {
   renderTeacherView();
 }
 
-function toggleRoster(id) {
-  const roster = document.getElementById(id);
-  const arrow = document.getElementById(id + '-arrow');
-  const isOpen = roster.style.display !== 'none';
-  roster.style.display = isOpen ? 'none' : 'block';
-  if (arrow) arrow.textContent = isOpen ? '▸' : '▾';
-}
 
 function clearTeacherSchedule() {
   activeTeacher = null;
@@ -946,7 +799,8 @@ function highlightActiveBlock() {
   const now = new Date();
   const utc = now.getTime() + now.getTimezoneOffset() * 60000;
   const cdt = new Date(utc - 5 * 3600000); // CDT (UTC-5) — Texas in June
-  const todayKey = dayKeys[cdt.getDay()];
+  // Demo mode: treat today as Thu 6/11 so highlights work after program ends
+  const todayKey = 'thu';
   const nowMin = cdt.getHours() * 60 + cdt.getMinutes();
   const inProgramHours = nowMin >= 7 * 60 + 30 && nowMin <= 16 * 60 + 30;
 
@@ -988,40 +842,32 @@ function applyHighlight(container, shouldHighlight, nowMin) {
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
-async function init() {
-  await loadAllRosters();
+function init() {
   initPicker();
   highlightActiveBlock();
-  setInterval(highlightActiveBlock, 60 * 1000); // every minute
+  setInterval(highlightActiveBlock, 60 * 1000);
 
   const savedAt = Number(localStorage.getItem('sb_saved_at') || 0);
   const eightHours = 8 * 60 * 60 * 1000;
   if (Date.now() - savedAt > eightHours) {
-    ['sb_tab','sb_student_number','sb_student_name','sb_student_day','sb_teacher'].forEach(k => localStorage.removeItem(k));
+    ['sb_tab','sb_student_number','sb_student_day','sb_teacher'].forEach(k => localStorage.removeItem(k));
   } else {
-    // Refresh the timestamp so browsing away and back doesn't trigger expiry
     localStorage.setItem('sb_saved_at', Date.now());
   }
 
   const savedTab     = localStorage.getItem('sb_tab');
   const savedNumber  = localStorage.getItem('sb_student_number');
-  const savedName    = localStorage.getItem('sb_student_name');
   const savedDay     = localStorage.getItem('sb_student_day') || ACTIVE_DAY;
   const savedTeacher = localStorage.getItem('sb_teacher');
 
   if (savedTab) switchTab(savedTab);
 
-  // Restore teacher regardless of current tab — persists until another teacher is selected
   if (savedTeacher) {
     activeTeacher = savedTeacher;
-    // Always restore teacher view if we're on teacher tab, or if no student is saved
-    if (savedTab === 'teacher' || !savedNumber) {
-      selectTeacher(savedTeacher);
-    }
+    if (savedTab === 'teacher' || !savedNumber) selectTeacher(savedTeacher);
   }
   if (savedNumber && savedTab !== 'teacher') {
-    if (savedDay) switchStudentDay(savedDay);
-    showStudentSchedule(savedDay, Number(savedNumber), savedName || undefined);
+    switchStudentDay(savedDay);
   }
 }
 init();
